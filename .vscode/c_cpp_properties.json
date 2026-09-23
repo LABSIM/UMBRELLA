@@ -1,0 +1,33 @@
+{
+    "env": {
+        "defaultCompilerPath": "${env:CXX}",
+        "defaultIncludePath": [
+            "${workspaceFolder}/include",
+            "${workspaceFolder}/build"
+        ],
+        "defaultCompileCommands": "${workspaceFolder}/build/compile_commands.json"
+    },
+    "configurations": [
+        {
+            "name": "Linux",
+            "cStandard": "c23",
+            "cppStandard": "c++26",
+            "intelliSenseMode": "linux-gcc-x64",
+            "compilerPath": "${defaultCompilerPath}",
+            "includePath": [
+                "${defaultIncludePath}"
+            ],
+            "compileCommands": "${defaultCompileCommands}",
+            "browse": {
+                "path": [
+                    "${workspaceFolder}"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "configurationProvider": "ms-vscode.cmake-tools"
+        }
+    ],
+
+    "enableConfigurationSquiggles": true,
+    "version": 4
+}

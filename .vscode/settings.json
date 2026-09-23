@@ -1,0 +1,42 @@
+{
+    "cmake.environment": {
+        "PATH": "${env:PATH}",
+        "LD_LIBRARY_PATH": "${env:LD_LIBRARY_PATH}",
+        "PKG_CONFIG_PATH": "${env:PKG_CONFIG_PATH}",
+        "CPATH": "${env:CPATH}",
+        "CMAKE_MODULE_PATH": "${env:CMAKE_MODULE_PATH}",
+        "BOOST_ROOT": "${env:BOOST_ROOT}"
+    },
+
+    "cmake.configureEnvironment": {
+        "PATH": "${env:PATH}",
+        "LD_LIBRARY_PATH": "${env:LD_LIBRARY_PATH}",
+        "PKG_CONFIG_PATH": "${env:PKG_CONFIG_PATH}",
+        "CPATH": "${env:CPATH}",
+        "CMAKE_MODULE_PATH": "${env:CMAKE_MODULE_PATH}",
+        "BOOST_ROOT": "${env:BOOST_ROOT}"
+    },
+
+    "cmake.buildEnvironment": {
+        "PATH": "${env:PATH}",
+        "LD_LIBRARY_PATH": "${env:LD_LIBRARY_PATH}",
+        "PKG_CONFIG_PATH": "${env:PKG_CONFIG_PATH}",
+        "CPATH": "${env:CPATH}",
+        "CMAKE_MODULE_PATH": "${env:CMAKE_MODULE_PATH}",
+        "BOOST_ROOT": "${env:BOOST_ROOT}"
+    },
+    
+    "cmake.configureSettings": { 
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_INSTALL_PREFIX": "/home/labsim/prod/"
+    },
+
+    "cmake.configureOnOpen": false,
+    "cmake.buildBeforeRun": true,
+    "cmake.sourceDirectory": "${workspaceFolder}",
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.buildTask": true,
+
+    "C_Cpp.intelliSenseEngine": "default",
+    "C_Cpp.default.intelliSenseMode": "linux-gcc-x64"
+}

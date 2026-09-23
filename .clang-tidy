@@ -1,0 +1,28 @@
+Checks:
+    '
+        -*, 
+        boost-*, 
+        bugprone-*, 
+        cert-*, 
+        concurrency-*, 
+        cppcoreguidelines-*, 
+        hicpp-*, 
+        modernize-*, 
+        performance-*, 
+        readability-*, 
+        clang-diagnostic-*, 
+        clang-analyzer-*
+    '
+ExtraArgs:                    ['']
+ExtraArgsBefore:              ['']
+ImplementationFileExtensions: ['cpp','cxx']
+HeaderFileExtensions:         ['hpp','hxx']
+# HeaderFilterRegex:            '^(?!.build.).*$' Negative lookahead not supported... 
+# HeaderFilterRegex:            '.*'
+HeaderFilterRegex:            ''
+ExcludeHeaderFilterRegex:     '.*(build|grpc|grpc++|grpcpp|google|protobuf|Poco).*'
+WarningsAsErrors:             ''
+InheritParentConfig:          false
+FormatStyle:                  file
+User:                         nkinani
+UseColor:                     true

@@ -1,0 +1,60 @@
+{
+    //
+    // For more information, visit: 
+    // - [ https://go.microsoft.com/fwlink/?linkid=830387 ]
+    // - [ https://github.com/microsoft/vscode-cmake-tools/blob/main/docs/debug-launch.md ]
+    //
+    "version": "0.2.0",
+    "configurations": [ 
+        {
+            "name": "(GDB) UMBRELLA - build & debug [labsim-debug]",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/Umbrella-app",
+            "args": [ ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [
+                {
+                    "name": "LABSIM_VERBOSITY_LEVEL",
+                    "value": "DEBUG"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "UMBRELLA - build [labsim-debug]",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }, 
+        {
+            "name": "(GDB) UMBRELLA - clean build & debug [labsim-clean-debug]",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/Umbrella-app",
+            "args": [ ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [
+                {
+                    "name": "LABSIM_VERBOSITY_LEVEL",
+                    "value": "DEBUG"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "UMBRELLA - clean & build [labsim-clean-debug]",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,122 @@
+{
+    //
+    // For more information, visit: 
+    // - [ https://go.microsoft.com/fwlink/?LinkId=733558 ]
+    // - [ https://github.com/microsoft/vscode-cmake-tools/blob/main/docs/tasks.md ]
+    //
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "cmake",
+            "label": "UMBRELLA - dev [labsim-dev]",
+            "command": "build",
+            "targets": [
+                "labsim-dev"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "static-checker & formatter dev build task of the UMBRELLA project",
+        },
+        {
+            "type": "cmake",
+            "label": "UMBRELLA - clean [labsim-clean]",
+            "command": "clean",
+            "targets": [
+                "labsim-clean"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "clean task of the UMBRELLA project"
+        },
+        {
+            "type": "cmake",
+            "label": "UMBRELLA - build [labsim-debug]",
+            "command": "build",
+            "targets": [
+                "labsim-debug"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "debug build task of the UMBRELLA project"
+        },
+        {
+            "type": "cmake",
+            "label": "UMBRELLA - clean & build [labsim-clean-debug]",
+            "command": "cleanRebuild",
+            "targets": [
+                "labsim-clean-debug"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "clean & debug build task of the UMBRELLA project"
+        },
+        {
+            "type": "cmake",
+            "label": "UMBRELLA - build [labsim-release]",
+            "command": "build",
+            "targets": [
+                "labsim-release"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "release build task of the UMBRELLA project"
+        },
+        {
+            "type": "cmake",
+            "label": "UMBRELLA - clean & build [labsim-clean-release]",
+            "command": "cleanRebuild",
+            "targets": [
+                "labsim-clean-release"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "clean & release build task of the UMBRELLA project"
+        },
+        {
+            "type": "cmake",
+            "label": "UMBRELLA - deploy [labsim-release]",
+            "command": "install",
+            "targets": [
+                "labsim-deploy"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "deploy build task of the UMBRELLA project"
+        },
+        {
+            "type": "cmake",
+            "label": "UMBRELLA - clean & deploy [labsim-clean-deploy]",
+            "command": "install",
+            "targets": [
+                "labsim-clean-deploy"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "clean & deploy build task of the UMBRELLA project"
+        }
+    ]
+}
