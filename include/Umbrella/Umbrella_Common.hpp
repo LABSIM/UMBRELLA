@@ -60,7 +60,7 @@ namespace Labsim::project::umbrella
 
     // enums class
 
-    class THETYS_API Common
+    class UMBRELLA_LIB_API Common
     {
     public:
 

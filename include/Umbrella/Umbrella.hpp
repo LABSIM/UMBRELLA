@@ -20,7 +20,4 @@
 #ifndef INCLUDE_UMBRELLA_UMBRELLA_HPP_
 #define INCLUDE_UMBRELLA_UMBRELLA_HPP_
 
-#include <Umbrella/Umbrella_Common.hpp>
-
-
 #endif /* INCLUDE_UMBRELLA_UMBRELLA_HPP_ */

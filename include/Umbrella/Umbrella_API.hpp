@@ -280,9 +280,9 @@ namespace Labsim
         return static_cast< std::uint_least64_t >(value);
     }
 
-    namespace project::umbrella 
+    namespace project::umbrella
     {
-    
+
         // NOLINTNEXTLINE(performance-enum-size)
         using status_code_type
             = enum class status_code
@@ -307,9 +307,9 @@ namespace Labsim
             // ----------------------------------- //
             // emiter
             // ----------------------------------- //
-            UMBRELLA_APP_     = 1_UI16 << 9_UI16,
-            UMBRELLA_LIB_     = 1_UI16 << 10_UI16,
-            FORCESEATDI_LIB_  = 1_UI16 << 11_UI16,
+            UMBRELLA_APP_    = 1_UI16 << 9_UI16,
+            UMBRELLA_LIB_    = 1_UI16 << 10_UI16,
+            FORCESEATDI_LIB_ = 1_UI16 << 11_UI16,
             // ----------------------------------- //
             // UMBRELLA APP CODE
             // ----------------------------------- //

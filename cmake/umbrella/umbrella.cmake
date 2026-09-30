@@ -137,6 +137,9 @@ target_link_libraries(
         Boost::headers
         Boost::thread
         Boost::filesystem
+        dl
+        pthread
+        Ouranos::log
 )
 
 ####################################################################
