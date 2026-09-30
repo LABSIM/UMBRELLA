@@ -17,3 +17,14 @@
 // If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <Umbrella/Umbrella.hpp>
+
+int main(int argc, char* argv[])
+{
+	(void)argc;
+	(void)argv;
+    
+    Umbrella::main();
+
+	return 0;
+}

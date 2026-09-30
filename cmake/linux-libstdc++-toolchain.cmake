@@ -86,7 +86,7 @@ function(LabsimCMakeToolchain_Compiler arg_TARGET)
         PRIVATE
             $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fvisibility=hidden>
             $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fvisibility-inlines-hidden>
-            $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-stdlib=libstdc++>
+            $<$<CXX_COMPILER_ID:Clang>:-stdlib=libstdc++>
     )
 
     # ------------------------------------------- #

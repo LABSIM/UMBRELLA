@@ -85,7 +85,6 @@ target_link_libraries(
     Umbrella-app
     PRIVATE
         Umbrella
-        Boost::program_options
 )
 
 ####################################################################

@@ -22,6 +22,17 @@
 ####################################################################
 
 ####################################################################
+#                           USER INPUT                             #
+####################################################################
+
+# root
+get_filename_component(DEFAULT_UMBRELLA_ROOT "${CMAKE_SOURCE_DIR}" ABSOLUTE)
+set(UMBRELLA_ROOT "${DEFAULT_UMBRELLA_ROOT}" CACHE PATH "Le path racine du projet Umbrella")
+
+# this way others can override this value form command line
+set(CMAKE_TOOLCHAIN_FILE ~/third_party/vcpkg/scripts/buildsystems/vcpkg.cmake CACHE FILEPATH "Path to vcpkg toolchain")
+
+####################################################################
 #                            PROJECT                               #
 ####################################################################
 
@@ -32,18 +43,10 @@ cmake_minimum_required(VERSION 3.31 FATAL_ERROR)
 project(project-Umbrella CXX)
 
 ####################################################################
-#                          DEPENDENCIES                            #
+#                          THIRD PARTY                             #
 ####################################################################
 
-include(cmake/third_party.cmake)
-
-####################################################################
-#                           USER INPUT                             #
-####################################################################
-
-# root
-get_filename_component(DEFAULT_UMBRELLA_ROOT "${CMAKE_SOURCE_DIR}" ABSOLUTE)
-set(UMBRELLA_ROOT "${DEFAULT_UMBRELLA_ROOT}" CACHE PATH "Le path racine du projet Umbrella")
+include(${UMBRELLA_ROOT}/cmake/third_party.cmake)
 
 ####################################################################
 #                    	      CONFIG                               #
@@ -72,13 +75,16 @@ endif()
 #                               TARGET                             #
 ####################################################################
 
+# other LABSIM SSE titans software : Ouranos
+include(cmake/titans.cmake)
+
 # linux libstdc++ toolchain
-include(cmake/toolchain.cmake)
+include(cmake/linux-libstdc++-toolchain.cmake)
 
 # tooling
 include(cmake/tool.cmake)
 
-# libs
+# lib
 include(cmake/umbrella/umbrella.cmake)
 
 # bin

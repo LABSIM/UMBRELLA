@@ -132,21 +132,25 @@ IncludeCategories:
     Priority:        1
     SortPriority:    1
     CaseSensitive:   false
+  - Regex:           '^(<Ouranos/.*(\.hpp|\.h)>)'
+    Priority:        2
+    SortPriority:    2
+    CaseSensitive:   false
   - Regex:           '^(<boost/.*(\.hpp|\.h)>)'
+    Priority:        3
+    SortPriority:    3
+    CaseSensitive:   false
+  - Regex:           '^(<Poco/.*(\.hpp|\.h)>)'
+    Priority:        4
+    SortPriority:    4
+    CaseSensitive:   false
+  - Regex:           '^(<(grpcpp|grpc|protobuf|google)/.*(\.hpp|\.h)>)'
     Priority:        5
     SortPriority:    5
     CaseSensitive:   false
-  - Regex:           '^(<Poco/.*(\.hpp|\.h)>)'
+  - Regex:           '^(<[[:alnum:]_.]+>)'
     Priority:        6
     SortPriority:    6
-    CaseSensitive:   false
-  - Regex:           '^(<(grpcpp|grpc|protobuf|google)/.*(\.hpp|\.h)>)'
-    Priority:        7
-    SortPriority:    7
-    CaseSensitive:   false
-  - Regex:           '^(<[[:alnum:]_.]+>)'
-    Priority:        8
-    SortPriority:    8
     CaseSensitive:   false
 IncludeIsMainRegex: '(Test)?$'
 IncludeIsMainSourceRegex: ''

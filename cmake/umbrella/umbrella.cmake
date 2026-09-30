@@ -40,13 +40,46 @@ project(
 #                            PREPROCESSING                         #
 ####################################################################
 
-####################################################################
+###################################################################
 #                          DEPENDENCIES                            #
 ####################################################################
 
 ####################################################################
 #                             USER INPUT                           #
 ####################################################################
+
+# ForceSeatDI 
+set(
+	FORCESEATDI_VERSION
+	"2.191" 
+	CACHE 
+        STRING "La version de la librairie ForceSeatDI"
+)
+set(
+	FORCESEATDI_DIR
+	"~/third_party/forceseat-di-${FORCESEATDI_VERSION}" 
+	CACHE 
+		PATH "Le path d'installation de la librairie ForceSeatDI"
+)
+set(
+	FORCESEATDI_LIBRARIES
+	"${FORCESEATDI_DIR}/ForceSeatDI64.LinuxPC.so" 
+	CACHE 
+		FILEPATH "La librairie ForceSeatDI a utiliser"
+)
+set(
+	FORCESEATDI_INCLUDEDIR
+	"${FORCESEATDI_DIR}/code" 
+	CACHE 
+		PATH "La librairie ForceSeatDI a utiliser"
+)
+
+# then 
+configure_file(
+    ${UMBRELLA_ROOT}/src/lib/ForceSeatDI_Loader.c.in 
+    ${CMAKE_CURRENT_BINARY_DIR}/ForceSeatDI_Loader.c
+    @ONLY
+)
 
 ####################################################################
 #                             PROCESSING                           #
@@ -62,6 +95,8 @@ target_include_directories(
     PUBLIC
         $<BUILD_INTERFACE:${UMBRELLA_ROOT}/include>
         $<INSTALL_INTERFACE:include>
+    PRIVATE
+        ${FORCESEATDI_INCLUDEDIR}
 )
 target_sources(
     Umbrella
@@ -84,21 +119,24 @@ target_sources(
             $<BUILD_INTERFACE:${UMBRELLA_ROOT}/include>
             $<INSTALL_INTERFACE:include>
         FILES
-            ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_.hpp
+            ${UMBRELLA_ROOT}/include/Umbrella/Umbrella.hpp
+            ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_Common.hpp
     PRIVATE
-        ${UMBRELLA_ROOT}/src/lib/Umbrella_.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/ForceSeatDI_Loader.c
+        ${UMBRELLA_ROOT}/src/lib/Umbrella.cpp
 )
 target_compile_definitions(
     Umbrella
 	PRIVATE 
         BUILDING_UMBRELLA_API
-        UMBRELLA_SOURCE
-        PROTOBUF_ENABLE_DEBUG_LOGGING_MAY_LEAK_PII
+        UMBRELLA_LIB_SOURCE
 )
 target_link_libraries(
     Umbrella
     PRIVATE
-        Boost::program_options
+        Boost::headers
+        Boost::thread
+        Boost::filesystem
 )
 
 ####################################################################
