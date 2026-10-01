@@ -22,12 +22,22 @@
 
 #include <Umbrella/Umbrella_API.hpp>
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
 // avoid namespace pollution
 namespace Labsim::project::umbrella
 {
 
-    UMBRELLA_LIB_API void
-    run();
+    // entry point
+
+    UMBRELLA_LIB_API
+    static void
+    main(
+        std::size_t const &                _argc,
+        std::vector< std::string > const & _argv
+    );
 
 } // namespace Labsim::project::umbrella
 

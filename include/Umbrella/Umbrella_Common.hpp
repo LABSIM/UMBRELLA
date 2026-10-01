@@ -93,6 +93,23 @@ namespace Labsim::project::umbrella
         return self_type::s_uuid_generator();
     }
 
+    // enums class
+
+    enum class UmbrellaStimAxisType : std::uint8_t
+    {
+        UNDEFINED_ = 0_UI8,
+        X_         = 1_UI8 << 0_UI8,
+        Y_         = 1_UI8 << 1_UI8,
+        Z_         = 1_UI8 << 2_UI8,
+        HEAVE_     = Y_,
+        SWAY_      = X_,
+        SURGE_     = Z_
+    };
+
+    // global scope opt-in for bitfields-ops
+
+    consteval void ouranos_enable_bitmask_ops(UmbrellaStimAxisType);
+
 } // namespace Labsim::project::umbrella
 
 #endif /* INCLUDE_UMBRELLA_UMBRELLA_HPP_ */

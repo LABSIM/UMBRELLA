@@ -22,14 +22,17 @@
 auto
 main(
     int    argc,
-    char * argv[]
+    char * pArgv[]
 )
     -> int
 {
-    (void)argc;
-    (void)argv;
+    auto argc 
+        = std::size_t(argc);
+    auto argv 
+        = std::vector< std::string >{
+            pArgv,
+            pArgv + argc
+        };
 
-    Labsim::project::umbrella::run();
-
-    return 0;
+    return Labsim::project::umbrella::main(argc,argv);;
 }

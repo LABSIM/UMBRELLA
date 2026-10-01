@@ -279,7 +279,11 @@ namespace Labsim::project::umbrella
     }
 
     void
-    run()
+    do_run_stim(
+        BitmaskEnum< UmbrellaStimAxisType > stim_axis,
+        double                              stim_frequency_hz,
+        double                              stim_amplitude_mm
+    )
     {
         std::vector< FSDI_Handle > apis;
         work(apis);
@@ -289,6 +293,21 @@ namespace Labsim::project::umbrella
             ForceSeatDI_Park(api, FSDI_ParkMode_Normal);
             ForceSeatDI_Delete(api);
         }
+    }
+
+    auto
+    main(
+        std::size_t const &                _argc,
+        std::vector< std::string > const & _argv
+    )
+		-> 
+    {
+        // default arg
+        do_run_stim(
+            BitmaskEnum{UmbrellaStimAxisType::X_ | UmbrellaStimAxisType::Y_},
+            30.0,
+            0.2
+        );
     }
 
 } // namespace Labsim::project::umbrella
