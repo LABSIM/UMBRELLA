@@ -19,12 +19,17 @@
 
 #include <Umbrella/Umbrella.hpp>
 
-int main(int argc, char* argv[])
+auto
+main(
+    int    argc,
+    char * argv[]
+)
+    -> int
 {
-	(void)argc;
-	(void)argv;
-    
-    Umbrella::main();
+    (void)argc;
+    (void)argv;
 
-	return 0;
+    Labsim::project::umbrella::run();
+
+    return 0;
 }

@@ -78,8 +78,8 @@ endif()
 # other LABSIM SSE titans software : Ouranos
 include(cmake/titans.cmake)
 
-# linux libstdc++ toolchain
-include(cmake/linux-libstdc++-toolchain.cmake)
+# linux toolchain
+include(cmake/linux-toolchain.cmake)
 
 # tooling
 include(cmake/tool.cmake)

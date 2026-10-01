@@ -20,4 +20,15 @@
 #ifndef INCLUDE_UMBRELLA_UMBRELLA_HPP_
 #define INCLUDE_UMBRELLA_UMBRELLA_HPP_
 
+#include <Umbrella/Umbrella_API.hpp>
+
+// avoid namespace pollution
+namespace Labsim::project::umbrella
+{
+
+    UMBRELLA_LIB_API void
+    run();
+
+} // namespace Labsim::project::umbrella
+
 #endif /* INCLUDE_UMBRELLA_UMBRELLA_HPP_ */

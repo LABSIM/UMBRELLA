@@ -25,14 +25,43 @@ on LINUX platform, we assume at least:
     > GCC
     > GDB 
     > Binutils : GNU ar/gold
+    > libstdc++
 
 + LLVM Toolchain :
     > clang
     > lldb
     > lld
-    > libc++ & libc++abi
+    > classical libstdc++ or optional libc++ & libc++abi
 
 #]] 
+
+####################################################################
+#                  Compiler suite global settings                  #
+####################################################################
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+
+    # user input 
+    option(LABSIM_ENABLE_LIBCXX_ABI "Utiliser la libc++ & libc++abi" OFF)
+
+    # linker type
+    set(CMAKE_LINKER_TYPE "LLD")
+
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+
+    # linker type 
+    set(CMAKE_LINKER_TYPE "GOLD")
+
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+  
+    # using Intel C++
+
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  
+    # using Visual Studio C++
+
+endif()
+
 
 ####################################################################
 #                             COMPILER                             #
@@ -65,10 +94,11 @@ function(LabsimCMakeToolchain_Compiler arg_TARGET)
      #[[
         
     ==========================================================================================
-    GNU GCC / LLVM Clang
+    GNU GCC & LLVM Clang
     ------------------------------------------------------------------------------------------
 
-    -stdlib=libstdc++
+    -stdlib=libstdc++ 
+        or <LLVM only> -stdlib=libc++
 
     -fvisibility=hidden 
         set default symbol visibility to hidden (very important to obtain small binaries)
@@ -84,9 +114,9 @@ function(LabsimCMakeToolchain_Compiler arg_TARGET)
     target_compile_options(
         ${arg_TARGET}
         PRIVATE
-            $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fvisibility=hidden>
-            $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fvisibility-inlines-hidden>
-            $<$<CXX_COMPILER_ID:Clang>:-stdlib=libstdc++>
+            $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fvisibility=hidden -fvisibility-inlines-hidden>
+            $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-fvisibility=hidden -fvisibility-inlines-hidden>
+            $<$<AND:$<COMPILE_LANG_AND_ID:CXX,Clang>,$<BOOL:${LABSIM_ENABLE_LIBCXX_ABI}>>:-stdlib=libc++>
     )
 
     # ------------------------------------------- #
@@ -101,15 +131,21 @@ function(LabsimCMakeToolchain_Compiler arg_TARGET)
         target_compile_options(
             ${arg_TARGET}
             PRIVATE
-                $<$<AND:$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>,$<CONFIG:Debug>>:-Og>
-                $<$<AND:$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>,$<CONFIG:Release>>:-O3>
-                $<$<AND:$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>,$<CONFIG:RelWithDebInfo>>:-O2>
-                $<$<AND:$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>,$<CONFIG:MinSizeRel>>:-Os>
+                $<$<AND:$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>,$<CONFIG:Debug>>:-Og>
+                $<$<AND:$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>,$<CONFIG:Release>>:-O3>
+                $<$<AND:$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>,$<CONFIG:RelWithDebInfo>>:-O2>
+                $<$<AND:$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>,$<CONFIG:MinSizeRel>>:-Os>
+
+                $<$<AND:$<COMPILE_LANG_AND_ID:C,GNU,Clang>,$<CONFIG:Debug>>:-Og>
+                $<$<AND:$<COMPILE_LANG_AND_ID:C,GNU,Clang>,$<CONFIG:Release>>:-O3>
+                $<$<AND:$<COMPILE_LANG_AND_ID:C,GNU,Clang>,$<CONFIG:RelWithDebInfo>>:-O2>
+                $<$<AND:$<COMPILE_LANG_AND_ID:C,GNU,Clang>,$<CONFIG:MinSizeRel>>:-Os>
         )
         target_compile_definitions(
             ${arg_TARGET}
             PRIVATE
-                $<$<AND:$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>,$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>>:NDEBUG>
+                $<$<AND:$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>,$<CONFIG:Release,MinSizeRel>>:NDEBUG>
+                $<$<AND:$<COMPILE_LANG_AND_ID:C,GNU,Clang>,$<CONFIG:Release,MinSizeRel>>:NDEBUG>
         )
 
     else()
@@ -183,22 +219,8 @@ function(LabsimCMakeToolchain_Compiler arg_TARGET)
         target_compile_options(
             ${arg_TARGET}
             PRIVATE
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wall>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wextra>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wshadow>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wdouble-promotion>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wformat=2>
-                $<$<CXX_COMPILER_ID:GNU>:-Wformat-overflow=2>
-                $<$<CXX_COMPILER_ID:GNU>:-Wformat-truncation=2>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wundef>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wconversion>
-                $<$<CXX_COMPILER_ID:GNU>:-Warith-conversion>
-                # $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wpadded>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wswitch-default>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wswitch-enum>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wredundant-decls>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wmissing-declarations>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wmissing-include-dirs>
+                $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wall -Wextra -Wshadow -Wdouble-promotion -Wformat=2 -Wundef -Wconversion -Wswitch-default -Wswitch-enum -Wredundant-decls -Wmissing-declarations -Wmissing-include-dirs>
+                $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wformat-overflow=2 -Wformat-truncation=2 -Warith-conversion>
         )
 
     else()
@@ -231,13 +253,7 @@ function(LabsimCMakeToolchain_Compiler arg_TARGET)
         target_compile_options(
             ${arg_TARGET}
             PRIVATE
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wno-deprecated-declarations>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wno-unused-parameter>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wno-unused-variable>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wno-unused-local-typedefs>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wno-sign-compare>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wno-multichar>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wno-non-virtual-dtor>
+                $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wno-deprecated-declarations -Wno-unused-parameter -Wno-unused-variable -Wno-unused-local-typedefs -Wno-sign-compare -Wno-multichar -Wno-non-virtual-dtor>
         )
 
         if(arg_OVERRIDE)
@@ -290,8 +306,10 @@ function(LabsimCMakeToolchain_Debugger arg_TARGET)
         target_compile_options(
             ${arg_TARGET}
             PRIVATE
-                $<$<AND:$<CXX_COMPILER_ID:GNU>,$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>>:-ggdb3>
-                $<$<AND:$<CXX_COMPILER_ID:Clang>,$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>>:-glldb>
+                $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-ggdb3>
+                $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-glldb>
+                $<$<COMPILE_LANG_AND_ID:C,GNU>:-ggdb3>
+                $<$<COMPILE_LANG_AND_ID:C,Clang>:-glldb>
         )
 
     else()
@@ -344,6 +362,12 @@ function(LabsimCMakeToolchain_Linker arg_TARGET)
 
     -fuse-ld=lld 
         Use the lld linker instead of the default linker.
+
+    <optional>
+    
+    -lc++ 
+    -lc++abi 
+        Use the cxx abi if required 
         
     ==========================================================================================
     GNU GCC 
@@ -358,8 +382,12 @@ function(LabsimCMakeToolchain_Linker arg_TARGET)
     target_link_options(
         ${arg_TARGET}
         PRIVATE
-            $<$<CXX_COMPILER_ID:Clang>:-fuse-ld=lld>
-            $<$<CXX_COMPILER_ID:GNU>:-fuse-ld=gold>
+            $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fuse-ld=gold>
+            $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-fuse-ld=lld>
+            $<$<AND:$<COMPILE_LANG_AND_ID:CXX,Clang>,$<BOOL:${LABSIM_ENABLE_LIBCXX_ABI}>>:-lc++ -lc++abi>
+            $<$<COMPILE_LANG_AND_ID:C,GNU>:-fuse-ld=gold>
+            $<$<COMPILE_LANG_AND_ID:C,Clang>:-fuse-ld=lld>
+            $<$<AND:$<COMPILE_LANG_AND_ID:C,Clang>,$<BOOL:${LABSIM_ENABLE_LIBCXX_ABI}>>:-lc++ -lc++abi>
     )
 
     # ------------------------------------------- #
@@ -399,10 +427,8 @@ function(LabsimCMakeToolchain_Linker arg_TARGET)
         target_link_options(
             ${arg_TARGET}
             PRIVATE
-                # $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wl,--no-whole-archive>
-                # $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wl,--exclude-libs,ALL>                
-                $<$<CXX_COMPILER_ID:GNU>:-Wl,--threads>
-                $<$<CXX_COMPILER_ID:GNU>:-Wl,--thread-count=${LABSIM_NUMBER_OF_BUILD_PROCESS}>
+                $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wl,--no-whole-archive -Wl,--exclude-libs,ALL -Wl,--threads -Wl,--thread-count=${LABSIM_NUMBER_OF_BUILD_PROCESS}>
+                $<$<COMPILE_LANG_AND_ID:C,GNU,Clang>:-Wl,--no-whole-archive -Wl,--exclude-libs,ALL -Wl,--threads -Wl,--thread-count=${LABSIM_NUMBER_OF_BUILD_PROCESS}>
         )
 
     else()
@@ -744,8 +770,8 @@ function(LabsimCMakeToolchain_Feature arg_TARGET)
         target_compile_options(
             ${arg_TARGET}
             PRIVATE
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-pedantic>
-                $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-pedantic-errors>
+                $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-pedantic -pedantic-errors>
+                $<$<COMPILE_LANG_AND_ID:C,GNU,Clang>:-pedantic -pedantic-errors>
         )
 
     endif()
@@ -755,3 +781,5 @@ function(LabsimCMakeToolchain_Feature arg_TARGET)
     endif()
 
 endfunction() # LabsimCMakeToolchain_Feature()
+
+# = EOF
