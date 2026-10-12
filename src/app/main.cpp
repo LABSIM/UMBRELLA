@@ -26,13 +26,14 @@ main(
 )
     -> int
 {
-    auto argc 
+    auto safe_argc
         = std::size_t(argc);
-    auto argv 
+
+    auto safe_argv
         = std::vector< std::string >{
             pArgv,
             pArgv + argc
         };
 
-    return Labsim::project::umbrella::main(argc,argv);;
+    return Labsim::project::umbrella::processMain(safe_argc, safe_argv);
 }

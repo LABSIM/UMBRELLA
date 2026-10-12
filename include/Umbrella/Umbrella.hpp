@@ -31,13 +31,11 @@ namespace Labsim::project::umbrella
 {
 
     // entry point
-
-    UMBRELLA_LIB_API
-    static void
-    main(
+    UMBRELLA_LIB_API auto
+    processMain(
         std::size_t const &                _argc,
         std::vector< std::string > const & _argv
-    );
+    ) -> int;
 
 } // namespace Labsim::project::umbrella
 
