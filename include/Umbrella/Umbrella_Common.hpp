@@ -101,9 +101,15 @@ namespace Labsim::project::umbrella
         X_         = 1_UI8 << 0_UI8,
         Y_         = 1_UI8 << 1_UI8,
         Z_         = 1_UI8 << 2_UI8,
+        RX_        = 1_UI8 << 3_UI8,
+        RY_        = 1_UI8 << 4_UI8,
+        RZ_        = 1_UI8 << 5_UI8,
         HEAVE_     = Y_,
         SWAY_      = X_,
-        SURGE_     = Z_
+        SURGE_     = Z_,
+        PITCH_     = RX_,
+        ROLL_      = RY_,
+        YAW_       = RZ_
     };
 
     // global scope opt-in for bitfields-ops

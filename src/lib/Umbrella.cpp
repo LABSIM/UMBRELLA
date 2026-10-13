@@ -21,16 +21,17 @@
 #include <Umbrella/Umbrella_Common.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <ctime>
 #include <dlfcn.h>
+#include <numbers>
+#include <string_view>
+#include <thread>
 #include <unistd.h>
 #include <vector>
-#include <string_view>
-#include <chrono>
-#include <thread>
 
 #include "ForceSeatDI.h"
 
@@ -169,16 +170,19 @@ namespace Labsim::project::umbrella
         static constexpr auto fsdi_platform_count = 1_UI32;
         static constexpr auto fsdi_platform_ip    = "10.1.1.75"sv;
         static constexpr auto fsdi_platform_sn    = L"250031-000457-315839-323120"sv;
+        static constexpr auto mm_to_m_factor      = 1000.0;
+        static constexpr auto two_constant        = 2.0;
 
         // various period
-        static const auto idle_init_period   = 500ms;
-        static const auto target_loop_period = 100ms;
+        static auto const idle_init_period   = 500ms;
+        static auto const target_loop_period = 100ms;
 
         // ticking mechanism
-        static const auto ticking_platform_start = std::chrono::high_resolution_clock::now();
-        static auto ticking_loop_start    = std::chrono::high_resolution_clock::now();
-        static auto ticking_loop_end      = std::chrono::high_resolution_clock::now();
-        static auto ticking_elapsed       = std::chrono::duration<double, std::milli>{ticking_loop_end - ticking_loop_start};
+        static auto const ticking_platform_start   = std::chrono::high_resolution_clock::now();
+        static auto       ticking_platform_elapsed = std::chrono::duration< double >{std::chrono::high_resolution_clock::now() - ticking_platform_start};
+        static auto       ticking_loop_start       = std::chrono::high_resolution_clock::now();
+        static auto       ticking_loop_end         = std::chrono::high_resolution_clock::now();
+        static auto       ticking_loop_elapsed     = std::chrono::duration< double, std::milli >{ticking_loop_end - ticking_loop_start};
 
         // the ForceSetDI motion platform handle
         auto fsdi_apis = std::vector< FSDI_Handle >{};
@@ -186,31 +190,28 @@ namespace Labsim::project::umbrella
         // try ethernet first
         if(!connectNET(fsdi_apis, fsdi_platform_index, fsdi_platform_ip.data()))
         {
-
             // failsafe over USB ?
             if(!connectUSB(fsdi_apis, fsdi_platform_index, fsdi_platform_sn.data()))
             {
-                
-                // fail... 
+                // fail...
                 return;
 
             } /* if() */
-            
+
         } /* if() */
 
-        // init idle 
+        // init idle
         std::this_thread::sleep_for(idle_init_period);
-    
-        // should always be 1 ! 
+
+        // should always be 1 !
         if(fsdi_apis.size() != fsdi_platform_count)
         {
-        
-            // fail... 
+            // fail...
             return;
-        
+
         } /* if() */
 
-        // initialize FSDI structs 
+        // initialize FSDI structs
 
         static FSDI_TopTablePositionPhysical fsdi_requestedPosition;
         memset(&fsdi_requestedPosition, 0, sizeof(fsdi_requestedPosition));
@@ -230,16 +231,134 @@ namespace Labsim::project::umbrella
         fsdi_actualPlatformInfo.structSize = sizeof(FSDI_PlatformInfo);
 
         //
-        // infinite stim loop 
+        // infinite stim loop
         //
         while(true)
         {
-            
-            // update ticking 
-            ticking_loop_start = std::chrono::high_resolution_clock::now();
+            // update ticking
+            ticking_loop_start       = std::chrono::high_resolution_clock::now();
+            ticking_platform_elapsed = (ticking_loop_start - ticking_platform_start);
 
-            // stim calculus 
+            // reset requested
+            fsdi_requestedPosition.yaw
+                = fsdi_requestedPosition.pitch
+                = fsdi_requestedPosition.roll
+                = fsdi_requestedPosition.heave
+                = fsdi_requestedPosition.sway
+                = fsdi_requestedPosition.surge
+                = 0.0f;
 
+            // sway calculus
+            if(stim_axis.AnyOf(UmbrellaStimAxisType::SWAY_))
+            {
+                //
+                // x(t) = Ax * sin((2*pi*t) / T)
+                //
+                fsdi_requestedPosition.sway
+                    = ((stim_amplitude_mm / mm_to_m_factor)
+                       * std::sin(
+                           (two_constant * std::numbers::pi * ticking_platform_elapsed.count())
+                           / stim_frequency_hz
+                       )
+                    );
+
+            } /* if()*/
+
+            // heave calculus
+            if(stim_axis.AnyOf(UmbrellaStimAxisType::HEAVE_))
+            {
+                //
+                // y(t) = Ay * sin( ((2*pi*t) / T) + ( (pi/2) * sin((2*pi*t) / T(y)) ) )
+                //
+                fsdi_requestedPosition.heave
+                    = ((stim_amplitude_mm / mm_to_m_factor)
+                       * std::sin(
+                           (
+                               (two_constant * std::numbers::pi * ticking_platform_elapsed.count())
+                               / stim_frequency_hz
+                           )
+                           + ((std::numbers::pi / two_constant)
+                              * ((two_constant * std::numbers::pi * ticking_platform_elapsed.count())
+                                 / stim_y_axis_phase_offset_s
+                              )
+                           )
+                       )
+                    );
+
+            } /* if()*/
+
+            // surge calculus
+            if(stim_axis.AnyOf(UmbrellaStimAxisType::SURGE_))
+            {
+                //
+                // z(t) = Az * sin( ((2*pi*t) / T) + ( (pi/2) * sin((2*pi*t) / T(z)) ) )
+                //
+                fsdi_requestedPosition.surge
+                    = ((stim_amplitude_mm / mm_to_m_factor)
+                       * std::sin(
+                           (
+                               (two_constant * std::numbers::pi * ticking_platform_elapsed.count())
+                               / stim_frequency_hz
+                           )
+                           + ((std::numbers::pi / two_constant)
+                              * ((two_constant * std::numbers::pi * ticking_platform_elapsed.count())
+                                 / stim_z_axis_phase_offset_s
+                              )
+                           )
+                       )
+                    );
+
+            } /* if()*/
+
+            // rotational calculus
+            if(stim_axis.AnyOf(BitmaskEnum{UmbrellaStimAxisType::YAW_ | UmbrellaStimAxisType::PITCH_ | UmbrellaStimAxisType::ROLL_}))
+            {
+                // nothing for the moment
+
+            } /* if()*/
+
+            // send requested datas !
+            send(
+                fsdi_apis,
+                fsdi_platform_index,
+                fsdi_requestedPosition
+            );
+
+            // Read current actuators position
+
+            if(ForceSeatDI_GetActuatorsPosLog(
+                   fsdi_apis.at(fsdi_platform_index),
+                   &fsdi_actualPosition
+               )
+               != FSDI_True)
+            {
+                // failed...
+                // printf("Failed to get actuator pos");
+
+            } /* if() */
+
+            if(ForceSeatDI_GetTopTablePosPhy(
+                   fsdi_apis.at(fsdi_platform_index),
+                   &fsdi_actualTopTablePosition
+               )
+               != FSDI_True)
+            {
+                // failed...
+                // printf("Failed to get top table pos");
+
+            } /* if() */
+
+            if(ForceSeatDI_GetPlatformInfo(
+                   fsdi_apis.at(fsdi_platform_index),
+                   &fsdi_actualPlatformInfo
+               )
+               != FSDI_True)
+            {
+                // failed...
+                // printf("Failed to get platform info");
+                // printf("ErrorCode: %d", ForceSeatDI_GetRecentErrorCode(fsdi_apis.at(fsdi_platform_index)));
+
+            } /* if() */
 
             // // Prepare demo data
             // auto value = sinf(iterator * 3.1415f / 180) * 5 * 3.1415f / 180;
@@ -248,99 +367,77 @@ namespace Labsim::project::umbrella
             //     iterator = 0;
             // }
 
-//             pos.roll  = value;
-//             pos.pitch = 0;
+            //             pos.roll  = value;
+            //             pos.pitch = 0;
 
-//             send(apis, platform_index, pos);
+            //             send(apis, platform_index, pos);
 
-//             // if(NumberOfPlatforms > 1)
-//             // {
-//             //     pos.roll  = -value;
-//             //     pos.pitch = 0;
-//             //     send(apis, 1, pos);
-//             // }
+            //             // if(NumberOfPlatforms > 1)
+            //             // {
+            //             //     pos.roll  = -value;
+            //             //     pos.pitch = 0;
+            //             //     send(apis, 1, pos);
+            //             // }
 
-//             // if(NumberOfPlatforms > 2)
-//             // {
-//             //     pos.roll  = 0;
-//             //     pos.pitch = value;
-//             //     send(apis, 2, pos);
-//             // }
+            //             // if(NumberOfPlatforms > 2)
+            //             // {
+            //             //     pos.roll  = 0;
+            //             //     pos.pitch = value;
+            //             //     send(apis, 2, pos);
+            //             // }
 
-//             // if(NumberOfPlatforms > 3)
-//             // {
-//             //     pos.roll  = 0;
-//             //     pos.pitch = -value;
-//             //     send(apis, 3, pos);
-//             // }
+            //             // if(NumberOfPlatforms > 3)
+            //             // {
+            //             //     pos.roll  = 0;
+            //             //     pos.pitch = -value;
+            //             //     send(apis, 3, pos);
+            //             // }
 
-//             // Read current actuators position
-//             for(uint32_t i = 0; i < NumberOfPlatforms; ++i)
-//             {
-//                 if(ForceSeatDI_GetActuatorsPosLog(apis[i], &actualPositions[i]) != FSDI_True)
-//                 {
-//                     printf("Failed to get actuator pos from %u\n", (i + 1));
-//                 }
-//                 if(ForceSeatDI_GetTopTablePosPhy(apis[i], &topTablePos[i]) != FSDI_True)
-//                 {
-//                     printf("Failed to get top table pos from %u\n", (i + 1));
-//                 }
-//                 if(ForceSeatDI_GetPlatformInfo(apis[i], &platformInfos[i]) != FSDI_True)
-//                 {
-//                     printf("Failed to get platform info from %u\n", (i + 1));
-//                     printf("ErrorCode: %d", ForceSeatDI_GetRecentErrorCode(apis[i]));
-//                 }
-//             }
+            //             // Read current actuators position
+            //             for(uint32_t i = 0; i < NumberOfPlatforms; ++i)
+            //             {
+            //                 if(ForceSeatDI_GetActuatorsPosLog(apis[i], &actualPositions[i]) != FSDI_True)
+            //                 {
+            //                     printf("Failed to get actuator pos from %u\n", (i + 1));
+            //                 }
+            //                 if(ForceSeatDI_GetTopTablePosPhy(apis[i], &topTablePos[i]) != FSDI_True)
+            //                 {
+            //                     printf("Failed to get top table pos from %u\n", (i + 1));
+            //                 }
+            //                 if(ForceSeatDI_GetPlatformInfo(apis[i], &platformInfos[i]) != FSDI_True)
+            //                 {
+            //                     printf("Failed to get platform info from %u\n", (i + 1));
+            //                     printf("ErrorCode: %d", ForceSeatDI_GetRecentErrorCode(apis[i]));
+            //                 }
+            //             }
 
-// #if 1
-//             // NOTE: Displaying data is slow
-//             for(uint32_t i = 0; i < NumberOfPlatforms; ++i)
-//             {
-//                 printf("Platform: %u, Pos: %u, %u, %u, %u, %u, %u\n", (i + 1), actualPositions[i].actualMotorPosition[0], actualPositions[i].actualMotorPosition[1], actualPositions[i].actualMotorPosition[2], actualPositions[i].actualMotorPosition[3], actualPositions[i].actualMotorPosition[4], actualPositions[i].actualMotorPosition[5]);
-//                 printf("    Error code: %d.%d\n", static_cast< int >(platformInfos[i].moduleErrorCode), static_cast< int >(platformInfos[i].moduleErrorIndex));
-//                 printf("    Top Frame: roll %f, pitch %f, yaw %f, heave %f, surge %f, sway %f\n", topTablePos[i].roll, topTablePos[i].pitch, topTablePos[i].yaw, topTablePos[i].heave, topTablePos[i].surge, topTablePos[i].sway);
-//                 static_assert(FSDI_MotorsCount == 6, "");
-//             }
-// #endif
+            // #if 1
+            //             // NOTE: Displaying data is slow
+            //             for(uint32_t i = 0; i < NumberOfPlatforms; ++i)
+            //             {
+            //                 printf("Platform: %u, Pos: %u, %u, %u, %u, %u, %u\n", (i + 1), actualPositions[i].actualMotorPosition[0], actualPositions[i].actualMotorPosition[1], actualPositions[i].actualMotorPosition[2], actualPositions[i].actualMotorPosition[3], actualPositions[i].actualMotorPosition[4], actualPositions[i].actualMotorPosition[5]);
+            //                 printf("    Error code: %d.%d\n", static_cast< int >(platformInfos[i].moduleErrorCode), static_cast< int >(platformInfos[i].moduleErrorIndex));
+            //                 printf("    Top Frame: roll %f, pitch %f, yaw %f, heave %f, surge %f, sway %f\n", topTablePos[i].roll, topTablePos[i].pitch, topTablePos[i].yaw, topTablePos[i].heave, topTablePos[i].surge, topTablePos[i].sway);
+            //                 static_assert(FSDI_MotorsCount == 6, "");
+            //             }
+            // #endif
+            
 
-//             sleepMS(5);
+            //             sleepMS(5);
 
         } /* while() */
-
+        
         printf("SIM ended...\n");
 
         // cleanup
         for(FSDI_Handle api: fsdi_apis)
         {
-            
             ForceSeatDI_Park(api, FSDI_ParkMode_Normal);
             ForceSeatDI_Delete(api);
 
         } /* for() */
 
     } /* doWork() */
-
-    // void
-    // doStim(
-    //     BitmaskEnum< UmbrellaStimAxisType > stim_axis,
-    //     double                              stim_frequency_hz,
-    //     double                              stim_amplitude_mm,
-    //     double                              stim_x_axis_phase_offset_s,
-    //     double                              stim_y_axis_phase_offset_s,
-    //     double                              stim_z_axis_phase_offset_s
-    // )
-    // {
-    //     std::vector< FSDI_Handle > apis;
-
-    //     doWork(apis);
-
-    //     for(FSDI_Handle api: apis)
-    //     {
-    //         ForceSeatDI_Park(api, FSDI_ParkMode_Normal);
-    //         ForceSeatDI_Delete(api);
-    //     }
-
-    // } /* doStim()  */
 
     auto
     processMain(
@@ -356,7 +453,7 @@ namespace Labsim::project::umbrella
         //
         [[maybe_unused]] static constexpr auto default_C1_frequency_hz = 0.2;
         [[maybe_unused]] static constexpr auto default_C1_amplitude_mm = 20.0;
-        
+
         //
         // case 2
         // ---
@@ -381,7 +478,7 @@ namespace Labsim::project::umbrella
         // ---
         // by default, 3D movement
         //
-        static constexpr auto default_stim_axis 
+        static constexpr auto default_stim_axis
             = BitmaskEnum{
                 UmbrellaStimAxisType::HEAVE_
                 | UmbrellaStimAxisType::SWAY_
@@ -389,7 +486,7 @@ namespace Labsim::project::umbrella
             };
 
         //
-        // do the WORK ! 
+        // do the WORK !
         //
         doWork(
             default_stim_axis,
