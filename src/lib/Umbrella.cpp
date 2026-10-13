@@ -20,6 +20,11 @@
 #include <Umbrella/Umbrella.hpp>
 #include <Umbrella/Umbrella_Common.hpp>
 
+#include <Ouranos/log/Ouranos_Logger_log.hpp>
+
+#include <boost/exception/all.hpp>
+#include <boost/numeric/conversion/cast.hpp>
+
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -27,6 +32,7 @@
 #include <cstring>
 #include <ctime>
 #include <dlfcn.h>
+#include <exception>
 #include <numbers>
 #include <string_view>
 #include <thread>
@@ -40,14 +46,6 @@ using namespace std::literals::chrono_literals;
 
 namespace Labsim::project::umbrella
 {
-
-    // void
-    // sleepMS(
-    //     unsigned int ms
-    // )
-    // {
-    //     usleep(ms * 1000);
-    // }
 
     bool
     prepareAPI(
@@ -165,6 +163,10 @@ namespace Labsim::project::umbrella
         double                              stim_z_axis_phase_offset_s
     )
     {
+        // ================================================================================ //
+        //                                 DEFINING SECTION                                 //
+        // ================================================================================ //
+
         // invariant
         static constexpr auto fsdi_platform_index = 0_UI32;
         static constexpr auto fsdi_platform_count = 1_UI32;
@@ -184,61 +186,78 @@ namespace Labsim::project::umbrella
         static auto       ticking_loop_end         = std::chrono::high_resolution_clock::now();
         static auto       ticking_loop_elapsed     = std::chrono::duration< double, std::milli >{ticking_loop_end - ticking_loop_start};
 
-        // the ForceSetDI motion platform handle
-        auto fsdi_apis = std::vector< FSDI_Handle >{};
+        // the ForceSetDI motion platform API handle
+        static auto fsdi_apis                   = std::vector< FSDI_Handle >{};
+        static auto fsdi_requestedPosition      = FSDI_TopTablePositionPhysical{};
+        static auto fsdi_actualPosition         = FSDI_ActualActuatorsPositionLogical{};
+        static auto fsdi_actualTopTablePosition = FSDI_ActualTopTablePositionPhysical{};
+        static auto fsdi_actualPlatformInfo     = FSDI_PlatformInfo{};
 
-        // try ethernet first
-        if(!connectNET(fsdi_apis, fsdi_platform_index, fsdi_platform_ip.data()))
+        // ================================================================================ //
+        //                                  LAMBDA SECTION                                  //
+        // ================================================================================ //
+
+        static auto lambda_configure
+            = [&]() -> void
         {
-            // failsafe over USB ?
-            if(!connectUSB(fsdi_apis, fsdi_platform_index, fsdi_platform_sn.data()))
+            // upstream
+            // allocate & configure FSDI resquested struct
+            memset(&fsdi_requestedPosition, 0, sizeof(fsdi_requestedPosition));
+            fsdi_requestedPosition.structSize          = sizeof(fsdi_requestedPosition);
+            fsdi_requestedPosition.maxSpeed            = 65535;
+            fsdi_requestedPosition.pause               = FSDI_False;
+            fsdi_requestedPosition.strategy            = FSDI_Strategy_BestMatch;
+            fsdi_requestedPosition.accelerationProfile = FSDI_AP_Rapid;
+
+            // downstream
+            // set sizes
+            fsdi_actualPosition.structSize         = sizeof(FSDI_ActualActuatorsPositionLogical);
+            fsdi_actualTopTablePosition.structSize = sizeof(FSDI_ActualTopTablePositionPhysical);
+            fsdi_actualPlatformInfo.structSize     = sizeof(FSDI_PlatformInfo);
+        }; /* lambda_configure() */
+
+        static auto lambda_connectToPlatform
+            = [&]() -> bool
+        {
+            // try ethernet first
+            if(!connectNET(fsdi_apis, fsdi_platform_index, fsdi_platform_ip.data()))
             {
-                // fail...
-                return;
+                // failsafe over USB ?
+                if(!connectUSB(fsdi_apis, fsdi_platform_index, fsdi_platform_sn.data()))
+                {
+                    // log
+                    LogError("[Umbrella]"sv)
+                        << "Failed to connect to platform"sv;
+
+                    // fail...
+                    return false;
+
+                } /* if() */
 
             } /* if() */
 
-        } /* if() */
+            // init idle
+            std::this_thread::sleep_for(idle_init_period);
 
-        // init idle
-        std::this_thread::sleep_for(idle_init_period);
+            // should always be 1 !
+            if(fsdi_apis.size() != fsdi_platform_count)
+            {
+                // log
+                LogError("[Umbrella]"sv)
+                    << "APIs does not match our..."sv;
 
-        // should always be 1 !
-        if(fsdi_apis.size() != fsdi_platform_count)
+                // fail...
+                return false;
+
+            } /* if() */
+
+            // if this point is reached, then its a success
+            return true;
+        }; /* lambda_connectToPlatform() */
+
+        static auto lambda_reinitUpstream
+            = [&]() -> void
         {
-            // fail...
-            return;
-
-        } /* if() */
-
-        // initialize FSDI structs
-
-        static FSDI_TopTablePositionPhysical fsdi_requestedPosition;
-        memset(&fsdi_requestedPosition, 0, sizeof(fsdi_requestedPosition));
-        fsdi_requestedPosition.structSize          = sizeof(fsdi_requestedPosition);
-        fsdi_requestedPosition.maxSpeed            = 65535;
-        fsdi_requestedPosition.pause               = FSDI_False;
-        fsdi_requestedPosition.strategy            = FSDI_Strategy_BestMatch;
-        fsdi_requestedPosition.accelerationProfile = FSDI_AP_Rapid;
-
-        static FSDI_ActualActuatorsPositionLogical fsdi_actualPosition;
-        fsdi_actualPosition.structSize = sizeof(FSDI_ActualActuatorsPositionLogical);
-
-        static FSDI_ActualTopTablePositionPhysical fsdi_actualTopTablePosition;
-        fsdi_actualTopTablePosition.structSize = sizeof(FSDI_ActualTopTablePositionPhysical);
-
-        static FSDI_PlatformInfo fsdi_actualPlatformInfo;
-        fsdi_actualPlatformInfo.structSize = sizeof(FSDI_PlatformInfo);
-
-        //
-        // infinite stim loop
-        //
-        while(true)
-        {
-            // update ticking
-            ticking_loop_start       = std::chrono::high_resolution_clock::now();
-            ticking_platform_elapsed = (ticking_loop_start - ticking_platform_start);
-
             // reset requested
             fsdi_requestedPosition.yaw
                 = fsdi_requestedPosition.pitch
@@ -247,83 +266,145 @@ namespace Labsim::project::umbrella
                 = fsdi_requestedPosition.sway
                 = fsdi_requestedPosition.surge
                 = 0.0f;
+        }; /* lambda_initUpstream() */
 
-            // sway calculus
-            if(stim_axis.AnyOf(UmbrellaStimAxisType::SWAY_))
+        static auto lambda_buildUpstream
+            = [&]() -> void
+        {
+            // encapsulate all calculus
+            try
             {
-                //
-                // x(t) = Ax * sin((2*pi*t) / T)
-                //
-                fsdi_requestedPosition.sway
-                    = ((stim_amplitude_mm / mm_to_m_factor)
-                       * std::sin(
-                           (two_constant * std::numbers::pi * ticking_platform_elapsed.count())
-                           / stim_frequency_hz
-                       )
-                    );
+                // sway calculus
+                if(stim_axis.AnyOf(UmbrellaStimAxisType::SWAY_))
+                {
+                    //
+                    // x(t) = Ax * sin((2*pi*t) / T)
+                    //
+                    fsdi_requestedPosition.sway
+                        = boost::numeric_cast< FSDI_FLOAT >(
+                            (stim_amplitude_mm / mm_to_m_factor)
+                            * std::sin(
+                                (two_constant * std::numbers::pi * ticking_platform_elapsed.count())
+                                / stim_frequency_hz
+                            )
+                        );
 
-            } /* if()*/
+                } /* if()*/
 
-            // heave calculus
-            if(stim_axis.AnyOf(UmbrellaStimAxisType::HEAVE_))
+                // heave calculus
+                if(stim_axis.AnyOf(UmbrellaStimAxisType::HEAVE_))
+                {
+                    //
+                    // y(t) = Ay * sin( ((2*pi*t) / T) + ( (pi/2) * sin((2*pi*t) / T(y)) ) )
+                    //
+                    fsdi_requestedPosition.heave
+                        = boost::numeric_cast< FSDI_FLOAT >(
+                            (stim_amplitude_mm / mm_to_m_factor)
+                            * std::sin(
+                                (
+                                    (two_constant * std::numbers::pi * ticking_platform_elapsed.count())
+                                    / stim_frequency_hz
+                                )
+                                + ((std::numbers::pi / two_constant)
+                                   * ((two_constant * std::numbers::pi * ticking_platform_elapsed.count())
+                                      / stim_y_axis_phase_offset_s
+                                   )
+                                )
+                            )
+                        );
+
+                } /* if()*/
+
+                // surge calculus
+                if(stim_axis.AnyOf(UmbrellaStimAxisType::SURGE_))
+                {
+                    //
+                    // z(t) = Az * sin( ((2*pi*t) / T) + ( (pi/2) * sin((2*pi*t) / T(z)) ) )
+                    //
+                    fsdi_requestedPosition.surge
+                        = boost::numeric_cast< FSDI_FLOAT >(
+                            (stim_amplitude_mm / mm_to_m_factor)
+                            * std::sin(
+                                (
+                                    (two_constant * std::numbers::pi * ticking_platform_elapsed.count())
+                                    / stim_frequency_hz
+                                )
+                                + ((std::numbers::pi / two_constant)
+                                   * ((two_constant * std::numbers::pi * ticking_platform_elapsed.count())
+                                      / stim_z_axis_phase_offset_s
+                                   )
+                                )
+                            )
+                        );
+
+                } /* if()*/
+
+                // rotational calculus
+                // if(stim_axis.AnyOf(UmbrellaStimAxisType::YAW_ | UmbrellaStimAxisType::PITCH_ | UmbrellaStimAxisType::ROLL_))
+                // {
+                //     // nothing for the moment
+
+                // } /* if()*/
+            }
+            catch(boost::numeric::negative_overflow const & _exception)
             {
-                //
-                // y(t) = Ay * sin( ((2*pi*t) / T) + ( (pi/2) * sin((2*pi*t) / T(y)) ) )
-                //
-                fsdi_requestedPosition.heave
-                    = ((stim_amplitude_mm / mm_to_m_factor)
-                       * std::sin(
-                           (
-                               (two_constant * std::numbers::pi * ticking_platform_elapsed.count())
-                               / stim_frequency_hz
-                           )
-                           + ((std::numbers::pi / two_constant)
-                              * ((two_constant * std::numbers::pi * ticking_platform_elapsed.count())
-                                 / stim_y_axis_phase_offset_s
-                              )
-                           )
-                       )
-                    );
-
-            } /* if()*/
-
-            // surge calculus
-            if(stim_axis.AnyOf(UmbrellaStimAxisType::SURGE_))
+                // log
+                LogWarn("[Umbrella]"sv)
+                    << " => caught boost::numeric::negative_overflow : "sv
+                    << _exception.what();
+            }
+            catch(boost::numeric::positive_overflow const & _exception)
             {
-                //
-                // z(t) = Az * sin( ((2*pi*t) / T) + ( (pi/2) * sin((2*pi*t) / T(z)) ) )
-                //
-                fsdi_requestedPosition.surge
-                    = ((stim_amplitude_mm / mm_to_m_factor)
-                       * std::sin(
-                           (
-                               (two_constant * std::numbers::pi * ticking_platform_elapsed.count())
-                               / stim_frequency_hz
-                           )
-                           + ((std::numbers::pi / two_constant)
-                              * ((two_constant * std::numbers::pi * ticking_platform_elapsed.count())
-                                 / stim_z_axis_phase_offset_s
-                              )
-                           )
-                       )
-                    );
-
-            } /* if()*/
-
-            // rotational calculus
-            if(stim_axis.AnyOf(BitmaskEnum{UmbrellaStimAxisType::YAW_ | UmbrellaStimAxisType::PITCH_ | UmbrellaStimAxisType::ROLL_}))
+                // log
+                LogWarn("[Umbrella]"sv)
+                    << " => caught boost::numeric::positive_overflow : "sv
+                    << _exception.what();
+            }
+            catch(boost::numeric::bad_numeric_cast const & _exception)
             {
-                // nothing for the moment
+                // log
+                LogWarn("[Umbrella]"sv)
+                    << " => caught boost::numeric::bad_numeric_cast : "sv
+                    << _exception.what();
+            }
+            catch(boost::exception const & _exception)
+            {
+                // log
+                LogWarn("[Umbrella]"sv)
+                    << " => caught boost::exception : "sv
+                    << boost::diagnostic_information(_exception);
+            }
+            catch(std::exception const & _exception)
+            {
+                // log
+                LogWarn("[Umbrella]"sv)
+                    << " => caught caught std::exception : "sv
+                    << _exception.what();
+            }
+            catch(...)
+            {
+                // log
+                LogWarn("[Umbrella]"sv)
+                    << " => caught caught unhandled exception : "sv
+                    << boost::current_exception_diagnostic_information();
 
-            } /* if()*/
+            } /* try() */
+        }; /* lambda_buildUpstream */
 
+        static auto lambda_sendUpstream
+            = [&]() -> void
+        {
             // send requested datas !
             send(
                 fsdi_apis,
                 fsdi_platform_index,
                 fsdi_requestedPosition
             );
+        }; /* lambda_sendRequest */
 
+        static auto lambda_readDownstream
+            = [&]() -> void
+        {
             // Read current actuators position
 
             if(ForceSeatDI_GetActuatorsPosLog(
@@ -359,83 +440,83 @@ namespace Labsim::project::umbrella
                 // printf("ErrorCode: %d", ForceSeatDI_GetRecentErrorCode(fsdi_apis.at(fsdi_platform_index)));
 
             } /* if() */
+        }; /* lambda_readActuator */
 
-            // // Prepare demo data
-            // auto value = sinf(iterator * 3.1415f / 180) * 5 * 3.1415f / 180;
-            // if(++iterator > 360)
+        static auto lambda_logDataToFile
+            = [&]() -> void
+        {
+            // // NOTE: Displaying data is slow
+            // for(uint32_t i = 0; i < NumberOfPlatforms; ++i)
             // {
-            //     iterator = 0;
+            //     printf("Platform: %u, Pos: %u, %u, %u, %u, %u, %u\n", (i + 1), actualPositions[i].actualMotorPosition[0], actualPositions[i].actualMotorPosition[1], actualPositions[i].actualMotorPosition[2], actualPositions[i].actualMotorPosition[3], actualPositions[i].actualMotorPosition[4], actualPositions[i].actualMotorPosition[5]);
+            //     printf("    Error code: %d.%d\n", static_cast< int >(platformInfos[i].moduleErrorCode), static_cast< int >(platformInfos[i].moduleErrorIndex));
+            //     printf("    Top Frame: roll %f, pitch %f, yaw %f, heave %f, surge %f, sway %f\n", topTablePos[i].roll, topTablePos[i].pitch, topTablePos[i].yaw, topTablePos[i].heave, topTablePos[i].surge, topTablePos[i].sway);
+            //     static_assert(FSDI_MotorsCount == 6, "");
             // }
+        }; /* lambda_logDataToFile */
 
-            //             pos.roll  = value;
-            //             pos.pitch = 0;
+        static auto lambda_cleanup
+            = [&]() -> void
+        {
+            // cleanup
+            for(FSDI_Handle api: fsdi_apis)
+            {
+                ForceSeatDI_Park(api, FSDI_ParkMode_Normal);
+                ForceSeatDI_Delete(api);
 
-            //             send(apis, platform_index, pos);
+            } /* for() */
+        }; /* lambda_cleanup() */
 
-            //             // if(NumberOfPlatforms > 1)
-            //             // {
-            //             //     pos.roll  = -value;
-            //             //     pos.pitch = 0;
-            //             //     send(apis, 1, pos);
-            //             // }
+        // ================================================================================ //
+        //                                 PROCESSING LOOP                                  //
+        // ================================================================================ //
 
-            //             // if(NumberOfPlatforms > 2)
-            //             // {
-            //             //     pos.roll  = 0;
-            //             //     pos.pitch = value;
-            //             //     send(apis, 2, pos);
-            //             // }
+        // config
+        lambda_configure();
 
-            //             // if(NumberOfPlatforms > 3)
-            //             // {
-            //             //     pos.roll  = 0;
-            //             //     pos.pitch = -value;
-            //             //     send(apis, 3, pos);
-            //             // }
+        // connect
+        if(!lambda_connectToPlatform())
+        {
+            // failed, return
+            return;
 
-            //             // Read current actuators position
-            //             for(uint32_t i = 0; i < NumberOfPlatforms; ++i)
-            //             {
-            //                 if(ForceSeatDI_GetActuatorsPosLog(apis[i], &actualPositions[i]) != FSDI_True)
-            //                 {
-            //                     printf("Failed to get actuator pos from %u\n", (i + 1));
-            //                 }
-            //                 if(ForceSeatDI_GetTopTablePosPhy(apis[i], &topTablePos[i]) != FSDI_True)
-            //                 {
-            //                     printf("Failed to get top table pos from %u\n", (i + 1));
-            //                 }
-            //                 if(ForceSeatDI_GetPlatformInfo(apis[i], &platformInfos[i]) != FSDI_True)
-            //                 {
-            //                     printf("Failed to get platform info from %u\n", (i + 1));
-            //                     printf("ErrorCode: %d", ForceSeatDI_GetRecentErrorCode(apis[i]));
-            //                 }
-            //             }
+        } /* if()*/
 
-            // #if 1
-            //             // NOTE: Displaying data is slow
-            //             for(uint32_t i = 0; i < NumberOfPlatforms; ++i)
-            //             {
-            //                 printf("Platform: %u, Pos: %u, %u, %u, %u, %u, %u\n", (i + 1), actualPositions[i].actualMotorPosition[0], actualPositions[i].actualMotorPosition[1], actualPositions[i].actualMotorPosition[2], actualPositions[i].actualMotorPosition[3], actualPositions[i].actualMotorPosition[4], actualPositions[i].actualMotorPosition[5]);
-            //                 printf("    Error code: %d.%d\n", static_cast< int >(platformInfos[i].moduleErrorCode), static_cast< int >(platformInfos[i].moduleErrorIndex));
-            //                 printf("    Top Frame: roll %f, pitch %f, yaw %f, heave %f, surge %f, sway %f\n", topTablePos[i].roll, topTablePos[i].pitch, topTablePos[i].yaw, topTablePos[i].heave, topTablePos[i].surge, topTablePos[i].sway);
-            //                 static_assert(FSDI_MotorsCount == 6, "");
-            //             }
-            // #endif
-            
+        // infinite stim loop
+        while(true)
+        {
+            // update ticking
+            ticking_loop_start       = std::chrono::high_resolution_clock::now();
+            ticking_platform_elapsed = (ticking_loop_start - ticking_platform_start);
 
-            //             sleepMS(5);
+            // call lambdas
+            lambda_reinitUpstream();
+            lambda_buildUpstream();
+            lambda_sendUpstream();
+            lambda_readDownstream();
+            lambda_logDataToFile();
+
+            // unpdate end timings
+            ticking_loop_end     = std::chrono::high_resolution_clock::now();
+            ticking_loop_elapsed = (ticking_loop_end - ticking_loop_start);
+
+            // check objectives
+            if(ticking_loop_elapsed > target_loop_period)
+            {
+                // simply log overflow
+                LogWarn("[Umbrella]"sv)
+                    << " => main loop has overshoot target period : current["sv
+                    << ticking_loop_elapsed
+                    << "] > target ["sv
+                    << target_loop_period
+                    << "]"sv;
+
+            } /* if() */
 
         } /* while() */
-        
-        printf("SIM ended...\n");
 
-        // cleanup
-        for(FSDI_Handle api: fsdi_apis)
-        {
-            ForceSeatDI_Park(api, FSDI_ParkMode_Normal);
-            ForceSeatDI_Delete(api);
-
-        } /* for() */
+        // clean before leaving
+        lambda_cleanup();
 
     } /* doWork() */
 
@@ -481,8 +562,8 @@ namespace Labsim::project::umbrella
         static constexpr auto default_stim_axis
             = BitmaskEnum{
                 UmbrellaStimAxisType::HEAVE_
-                | UmbrellaStimAxisType::SWAY_
-                | UmbrellaStimAxisType::SURGE_
+                & UmbrellaStimAxisType::SWAY_
+                & UmbrellaStimAxisType::SURGE_
             };
 
         //
