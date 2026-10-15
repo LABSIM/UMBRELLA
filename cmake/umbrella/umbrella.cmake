@@ -143,6 +143,7 @@ target_link_libraries(
         Boost::headers
         Boost::thread
         Boost::filesystem
+        Boost::program_options
         dl
         pthread
         Ouranos::log

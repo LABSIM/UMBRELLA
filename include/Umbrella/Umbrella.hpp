@@ -22,9 +22,9 @@
 
 #include <Umbrella/Umbrella_API.hpp>
 
-#include <cstdint>
-#include <string>
-#include <vector>
+// #include <cstdint>
+// #include <string>
+// #include <vector>
 
 // avoid namespace pollution
 namespace Labsim::project::umbrella
@@ -33,8 +33,8 @@ namespace Labsim::project::umbrella
     // entry point
     UMBRELLA_LIB_API auto
     processMain(
-        std::size_t const &                _argc,
-        std::vector< std::string > const & _argv
+        int const & _argc,
+        char *      pArgv[]
     ) -> int;
 
 } // namespace Labsim::project::umbrella

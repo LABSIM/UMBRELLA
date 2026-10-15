@@ -37,13 +37,14 @@ using namespace std::literals::string_view_literals;
 namespace Labsim::project::umbrella
 {
 
-    ApplicationManager::ApplicationManager(base_type::_token_type const & _token) noexcept
-        : base_type(_token) {
-
+    ApplicationManager::ApplicationManager(
+        base_type::_token_type const & _token
+    ) noexcept
+        : base_type(_token)
+    {
         // debug
         Labsim::LogDebug("[Umbrella]"sv)
             << "ApplicationManager::ApplicationManager() : token constructor call"sv;
-
     };
 
     auto
@@ -69,7 +70,7 @@ namespace Labsim::project::umbrella
 
             // stock & parse command line options
             this->m_argc = std::size_t(_argc);
-            
+
             // post c++23
             // this->m_argv.assign_range(pArgv);
 
@@ -98,7 +99,7 @@ namespace Labsim::project::umbrella
 
             // configure APIs structs
             if(!MotionPlatformManager::get()->Configure())
-            { 
+            {
                 // debug
                 Labsim::LogDebug("[Umbrella]"sv)
                     << "ApplicationManager::Initialize() : failed to configure the motion platform APIs"sv;
@@ -113,7 +114,7 @@ namespace Labsim::project::umbrella
 
             // connect to platform
             if(!MotionPlatformManager::get()->Connect())
-            { 
+            {
                 // debug
                 Labsim::LogDebug("[Umbrella]"sv)
                     << "ApplicationManager::Initialize() : failed to connect to the motion platform"sv;
@@ -125,7 +126,7 @@ namespace Labsim::project::umbrella
                 return status;
 
             } /* if() */
- 
+
             // debug
             Labsim::LogDebug("[Umbrella]"sv)
                 << "ApplicationManager::Initialize() : OK !"sv;
@@ -171,7 +172,7 @@ namespace Labsim::project::umbrella
     } /* Initialize() */
 
     auto
-    ApplicationManager::Run()
+    ApplicationManager::Run() const
         -> status_code_type
     {
         // debug
@@ -191,7 +192,6 @@ namespace Labsim::project::umbrella
         // encapsulate
         try
         {
-            
             // infinite stim loop
             while(true)
             {
@@ -200,7 +200,19 @@ namespace Labsim::project::umbrella
                 ticking_platform_elapsed = (ticking_loop_start - ticking_platform_start);
 
                 // process motion
-                MotionPlatformManager::get()->Process(ticking_platform_elapsed.count());
+                if(!MotionPlatformManager::get()->Process(ticking_platform_elapsed.count()))
+                {
+                    // debug
+                    Labsim::LogDebug("[Umbrella]"sv)
+                        << "ApplicationManager::Run() : motion platform failed to process..."sv;
+
+                    // switch status
+                    status = status_code::UMBRELLA_LIB_EXIT_;
+
+                    // exit
+                    return status;
+
+                } /* if() */
 
                 // unpdate end timings
                 ticking_loop_end     = std::chrono::high_resolution_clock::now();
@@ -214,13 +226,13 @@ namespace Labsim::project::umbrella
                         << " => main loop has overshoot target period : current["sv
                         << ticking_loop_elapsed
                         << "] > target ["sv
-                        <<  this->getOptions().getTargetLoopPeriod()
+                        << this->getOptions().getTargetLoopPeriod()
                         << "]"sv;
 
                 } /* if() */
 
             } /* while() */
-            
+
             // debug
             Labsim::LogDebug("[Umbrella]"sv)
                 << "ApplicationManager::Run() : end"sv;
@@ -279,16 +291,20 @@ namespace Labsim::project::umbrella
         // encapsulate
         try
         {
-            
-            // TODO ! 
+            // cleanup
+            if(!MotionPlatformManager::get()->Cleanup())
+            {
+                // debug
+                Labsim::LogDebug("[Umbrella]"sv)
+                    << "ApplicationManager::Close() : motion platform failed to cleanup..."sv;
 
-            using MPMng = MotionPlatformManager;
+                // switch status
+                status = status_code::UMBRELLA_LIB_EXIT_;
 
+                // exit
+                return status;
 
-
-
-
-
+            } /* if() */
 
             // switch status
             status = status_code::UMBRELLA_LIB_OK_;
@@ -329,6 +345,5 @@ namespace Labsim::project::umbrella
         return status;
 
     } /* Close() */
-
 
 } // namespace Labsim::project::umbrella

@@ -26,6 +26,7 @@ find_package(
 		thread
 		filesystem 
 		container
+		program_options
 )
 
 # Doxygen

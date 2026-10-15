@@ -92,25 +92,25 @@ namespace Labsim::project::umbrella
 
     private:
 
-        //  internal in processing loop methods 
+        //  internal in processing loop methods
 
-        auto 
+        auto
         ResetUpstream()
             -> bool;
 
-        auto 
+        auto
         BuildUpstream(double const & _elapsed_tick_count)
             -> bool;
 
-        auto 
+        auto
         SendUpstream()
             -> bool;
 
-        auto 
+        auto
         ReadDownstream()
             -> bool;
 
-        auto 
+        auto
         ProcessDownstream()
             -> bool;
 

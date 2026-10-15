@@ -17,16 +17,16 @@
 // If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <Umbrella/Umbrella_CommandLineOptions.hpp>
 #include <Umbrella/Umbrella_ApplicationManager.hpp>
+#include <Umbrella/Umbrella_CommandLineOptions.hpp>
 
 #include <Ouranos/log/Ouranos_Logger_log.hpp>
 
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/program_options.hpp>
 
-#include <string> 
-#include <string_view> 
+#include <string>
+#include <string_view>
 // #include <ranges>
 #include <codecvt>
 
@@ -58,9 +58,9 @@ namespace Labsim::project::umbrella
             using ms_type = decltype(self_type::_s_default_idle_init_duration_ms.count());
             ms_type idle_init_duration_buf{};
             ms_type target_loop_period_buf{};
-            auto converter = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>{};   
-            auto default_fsdi_platform_sn 
-                = std::string{ 
+            auto    converter = std::wstring_convert< std::codecvt_utf8_utf16< wchar_t > >{};
+            auto    default_fsdi_platform_sn
+                = std::string{
                     converter.to_bytes(
                         std::wstring{self_type::_s_default_fsdi_platform_sn}
                     )

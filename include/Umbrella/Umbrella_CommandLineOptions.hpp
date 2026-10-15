@@ -228,19 +228,19 @@ namespace Labsim::project::umbrella
 
         // members
 
-        uint32_t                            m_FSDIPlatformIndex{};
-        uint32_t                            m_FSDIPlatformCount{};
-        std::string                         m_FSDIPlatformIP;
-        std::wstring                        m_FSDIPlatformSN;
-        std::chrono::milliseconds           m_IdleInitDuration{};
-        std::chrono::milliseconds           m_TargetLoopPeriod{};
-        double                              m_S1Frequency{};
-        double                              m_S1Amplitude{};
-        double                              m_S2Frequency{};
-        double                              m_S2Amplitude{};
-        double                              m_XAxisPhaseOffset{};
-        double                              m_YAxisPhaseOffset{};
-        double                              m_ZAxisPhaseOffset{};
+        uint32_t                  m_FSDIPlatformIndex{};
+        uint32_t                  m_FSDIPlatformCount{};
+        std::string               m_FSDIPlatformIP;
+        std::wstring              m_FSDIPlatformSN;
+        std::chrono::milliseconds m_IdleInitDuration{};
+        std::chrono::milliseconds m_TargetLoopPeriod{};
+        double                    m_S1Frequency{};
+        double                    m_S1Amplitude{};
+        double                    m_S2Frequency{};
+        double                    m_S2Amplitude{};
+        double                    m_XAxisPhaseOffset{};
+        double                    m_YAxisPhaseOffset{};
+        double                    m_ZAxisPhaseOffset{};
 
     }; /* class CommandLineOptions */
 

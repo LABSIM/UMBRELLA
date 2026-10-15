@@ -21,12 +21,11 @@
 #define INCLUDE_UMBRELLA_UMBRELLA_APPLICATIONMANAGER_HPP_
 
 #include <Umbrella/Umbrella_API.hpp>
-#include <Umbrella/Umbrella_Common.hpp>
 #include <Umbrella/Umbrella_CommandLineOptions.hpp>
+#include <Umbrella/Umbrella_Common.hpp>
 
 #include <Ouranos/pattern/Ouranos_Singleton_pattern.hpp>
 
-#include <vector>
 #include <vector>
 
 // avoid namespace pollution
@@ -67,17 +66,17 @@ namespace Labsim::project::umbrella
 
         constexpr auto
         operator=(self_type && _rhs) noexcept
-            -> self_type & = delete;// methods
+            -> self_type & = delete; // methods
 
         auto
         Initialize(int const & _argc, char * pArgv[])
             -> status_code_type;
 
         auto
-        Run()
+        Run() const
             -> status_code_type;
 
-        auto
+        static auto
         Close()
             -> status_code_type;
 

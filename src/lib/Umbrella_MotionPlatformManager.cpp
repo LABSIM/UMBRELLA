@@ -17,8 +17,8 @@
 // If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <Umbrella/Umbrella_MotionPlatformManager.hpp>
 #include <Umbrella/Umbrella_ApplicationManager.hpp>
+#include <Umbrella/Umbrella_MotionPlatformManager.hpp>
 
 #include <Ouranos/log/Ouranos_Logger_log.hpp>
 
@@ -47,8 +47,8 @@ using namespace std::literals::chrono_literals;
 // avoid namespace pollution
 namespace Labsim::project::umbrella
 {
-    // anonymous 
-    namespace 
+    // anonymous
+    namespace
     {
 
         bool
@@ -159,12 +159,13 @@ namespace Labsim::project::umbrella
 
     } /* anonymous namespace */
 
-    MotionPlatformManager::MotionPlatformManager(base_type::_token_type const & _token) noexcept
-        : base_type(_token) 
+    MotionPlatformManager::MotionPlatformManager(
+        base_type::_token_type const & _token
+    ) noexcept
+        : base_type(_token)
     {
-
     }
-    
+
     auto
     MotionPlatformManager::Configure()
         -> bool
@@ -192,9 +193,9 @@ namespace Labsim::project::umbrella
         LogInfo("[Umbrella]"sv)
             << "MotionPlatformManager::Configure(): exit"sv;
 
-        // success 
+        // success
         return true;
-    
+
     } /* Configure() */
 
     auto
@@ -206,24 +207,23 @@ namespace Labsim::project::umbrella
             << "MotionPlatformManager::Connect(): entry"sv;
 
         // localc vars
-        static int32_t setting_index;
-        static int32_t setting_count;
-        static std::string setting_ip;
-        static std::wstring setting_sn;
+        static int32_t                   setting_index;
+        static int32_t                   setting_count;
+        static std::string               setting_ip;
+        static std::wstring              setting_sn;
         static std::chrono::milliseconds setting_idle_duration;
 
         { /* lock */
 
             auto handle = ApplicationManager::get();
 
-            setting_index = handle->getOptions().getFSDIPlatformIndex();
-            setting_count = handle->getOptions().getFSDIPlatformCount();
-            setting_ip = handle->getOptions().getFSDIPlatformIP();
-            setting_sn = handle->getOptions().getFSDIPlatformSN();
+            setting_index         = handle->getOptions().getFSDIPlatformIndex();
+            setting_count         = handle->getOptions().getFSDIPlatformCount();
+            setting_ip            = handle->getOptions().getFSDIPlatformIP();
+            setting_sn            = handle->getOptions().getFSDIPlatformSN();
             setting_idle_duration = handle->getOptions().getIdleInitDuration();
-            
-        } /* release */
 
+        } /* release */
 
         // try ethernet first
         if(!connectNET(this->m_fsdi_apis, setting_index, setting_ip.data()))
@@ -279,10 +279,11 @@ namespace Labsim::project::umbrella
     } /* Connect() */
 
     auto
-    MotionPlatformManager::Process(double const & _elapsed_tick_count)
+    MotionPlatformManager::Process(
+        double const & _elapsed_tick_count
+    )
         -> bool
     {
-        
         // call internal
 
         if(!this->ResetUpstream())
@@ -342,7 +343,7 @@ namespace Labsim::project::umbrella
 
         // if reached then it's a success
         return true;
-         
+
     } /* Process() */
 
     auto
@@ -352,26 +353,25 @@ namespace Labsim::project::umbrella
         // log
         LogInfo("[Umbrella]"sv)
             << "MotionPlatformManager::Cleanup(): entry"sv;
-        
+
         // cleanup
         for(FSDI_Handle api: this->m_fsdi_apis)
         {
-
             ForceSeatDI_Park(api, FSDI_ParkMode_Normal);
             ForceSeatDI_Delete(api);
 
         } /* for() */
-        
+
         // log
         LogInfo("[Umbrella]"sv)
             << "MotionPlatformManager::Cleanup(): exit"sv;
-        
+
         // if reached then it's a success
         return true;
-    
+
     } /* Cleanup() */
 
-    auto 
+    auto
     MotionPlatformManager::ResetUpstream()
         -> bool
     {
@@ -386,7 +386,7 @@ namespace Labsim::project::umbrella
             = this->m_fsdi_requestedPosition.heave
             = this->m_fsdi_requestedPosition.sway
             = this->m_fsdi_requestedPosition.surge
-            = 0.0f;
+            = 0.0F;
 
         // log
         LogInfo("[Umbrella]"sv)
@@ -397,20 +397,22 @@ namespace Labsim::project::umbrella
 
     } /* ResetUpstream() */
 
-    auto 
-    MotionPlatformManager::BuildUpstream(double const & _elapsed_tick_count)
+    auto
+    MotionPlatformManager::BuildUpstream(
+        double const & _elapsed_tick_count
+    )
         -> bool
     {
         // log
         LogInfo("[Umbrella]"sv)
             << "MotionPlatformManager::BuildUpstream(): entry"sv;
-            
+
         // invariant
-        static constexpr auto const _mm_to_m_factor      = 1000.0;
-        static constexpr auto const _two_constant        = 2.0;
+        static constexpr auto const _mm_to_m_factor = 1000.0;
+        static constexpr auto const _two_constant   = 2.0;
 
         // local vars
-        static bool bHasInit = false;
+        static bool   bHasInit = false;
         static double setting_amplitude;
         static double setting_frequency;
         static double setting_x_axis_phase_offset;
@@ -418,8 +420,8 @@ namespace Labsim::project::umbrella
         static double setting_z_axis_phase_offset;
 
         if(!bHasInit)
-        { 
-            // get a handle 
+        {
+            // get a handle
             auto handle = ApplicationManager::get();
 
             // extract settings
@@ -437,7 +439,6 @@ namespace Labsim::project::umbrella
         // encapsulate all calculus
         try
         {
-            
             //
             // Sway
             // x(t) = Ax * sin((2*pi*t) / T)
@@ -464,14 +465,14 @@ namespace Labsim::project::umbrella
                             / setting_frequency
                         )
                         + ((std::numbers::pi / _two_constant)
-                            * ((_two_constant * std::numbers::pi * _elapsed_tick_count)
-                                / setting_y_axis_phase_offset
-                            )
+                           * ((_two_constant * std::numbers::pi * _elapsed_tick_count)
+                              / setting_y_axis_phase_offset
+                           )
                         )
                     )
                 );
 
-            // 
+            //
             // Surge
             // z(t) = Az * sin( ((2*pi*t) / T) + ( (pi/2) * sin((2*pi*t) / T(z)) ) )
             //
@@ -484,13 +485,12 @@ namespace Labsim::project::umbrella
                             / setting_frequency
                         )
                         + ((std::numbers::pi / _two_constant)
-                            * ((_two_constant * std::numbers::pi * _elapsed_tick_count)
-                                / setting_z_axis_phase_offset
-                            )
+                           * ((_two_constant * std::numbers::pi * _elapsed_tick_count)
+                              / setting_z_axis_phase_offset
+                           )
                         )
                     )
                 );
-
         }
         catch(boost::numeric::negative_overflow const & _exception)
         {
@@ -535,7 +535,7 @@ namespace Labsim::project::umbrella
                 << boost::current_exception_diagnostic_information();
 
         } /* try() */
-        
+
         // log
         LogInfo("[Umbrella]"sv)
             << "MotionPlatformManager::BuildUpstream(): exit"sv;
@@ -545,16 +545,16 @@ namespace Labsim::project::umbrella
 
     } /* BuildUpstream() */
 
-    auto 
+    auto
     MotionPlatformManager::SendUpstream()
         -> bool
     {
         // log
         LogInfo("[Umbrella]"sv)
             << "MotionPlatformManager::SendUpstream(): entry"sv;
-        
+
         // setting
-        static auto const _setting_index 
+        static auto const _setting_index
             = ApplicationManager::get()->getOptions().getFSDIPlatformIndex();
 
         // send requested datas !
@@ -573,25 +573,25 @@ namespace Labsim::project::umbrella
 
     } /* SendUpstream() */
 
-    auto 
+    auto
     MotionPlatformManager::ReadDownstream()
         -> bool
     {
         // log
         LogInfo("[Umbrella]"sv)
             << "MotionPlatformManager::ReadDownstream(): entry"sv;
-        
+
         // setting
-        static auto const _setting_index 
+        static auto const _setting_index
             = ApplicationManager::get()->getOptions().getFSDIPlatformIndex();
 
         // Read current actuators position
 
         if(ForceSeatDI_GetActuatorsPosLog(
-                this->m_fsdi_apis.at(_setting_index),
-                &this->m_fsdi_actualPosition
-            )
-            != FSDI_True)
+               this->m_fsdi_apis.at(_setting_index),
+               &this->m_fsdi_actualPosition
+           )
+           != FSDI_True)
         {
             // failed...
             // printf("Failed to get actuator pos");
@@ -599,10 +599,10 @@ namespace Labsim::project::umbrella
         } /* if() */
 
         if(ForceSeatDI_GetTopTablePosPhy(
-                this->m_fsdi_apis.at(_setting_index),
-                &this->m_fsdi_actualTopTablePosition
-            )
-            != FSDI_True)
+               this->m_fsdi_apis.at(_setting_index),
+               &this->m_fsdi_actualTopTablePosition
+           )
+           != FSDI_True)
         {
             // failed...
             // printf("Failed to get top table pos");
@@ -610,17 +610,17 @@ namespace Labsim::project::umbrella
         } /* if() */
 
         if(ForceSeatDI_GetPlatformInfo(
-                this->m_fsdi_apis.at(_setting_index),
-                &this->m_fsdi_actualPlatformInfo
-            )
-            != FSDI_True)
+               this->m_fsdi_apis.at(_setting_index),
+               &this->m_fsdi_actualPlatformInfo
+           )
+           != FSDI_True)
         {
             // failed...
             // printf("Failed to get platform info");
             // printf("ErrorCode: %d", ForceSeatDI_GetRecentErrorCode(fsdi_apis.at(fsdi_platform_index)));
 
         } /* if() */
-        
+
         // log
         LogInfo("[Umbrella]"sv)
             << "MotionPlatformManager::ReadDownstream(): exit"sv;
@@ -630,14 +630,14 @@ namespace Labsim::project::umbrella
 
     } /* ReadDownstream() */
 
-    auto 
+    auto
     MotionPlatformManager::ProcessDownstream()
         -> bool
-    {        
+    {
         // log
         LogInfo("[Umbrella]"sv)
             << "MotionPlatformManager::ProcessDownstream(): entry"sv;
-        
+
         // // NOTE: Displaying data is slow
         // for(uint32_t i = 0; i < NumberOfPlatforms; ++i)
         // {
@@ -655,5 +655,5 @@ namespace Labsim::project::umbrella
         return true;
 
     } /* ReadDownstream() */
-        
+
 } // namespace Labsim::project::umbrella
