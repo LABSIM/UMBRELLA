@@ -200,6 +200,10 @@ namespace Labsim::project::umbrella
         static auto lambda_configure
             = [&]() -> void
         {
+            // log
+            LogInfo("[Umbrella]"sv)
+                << "lambda_configure(): entry"sv;
+
             // upstream
             // allocate & configure FSDI resquested struct
             memset(&fsdi_requestedPosition, 0, sizeof(fsdi_requestedPosition));
@@ -214,11 +218,19 @@ namespace Labsim::project::umbrella
             fsdi_actualPosition.structSize         = sizeof(FSDI_ActualActuatorsPositionLogical);
             fsdi_actualTopTablePosition.structSize = sizeof(FSDI_ActualTopTablePositionPhysical);
             fsdi_actualPlatformInfo.structSize     = sizeof(FSDI_PlatformInfo);
+
+            // log
+            LogInfo("[Umbrella]"sv)
+                << "lambda_configure(): exit"sv;
         }; /* lambda_configure() */
 
-        static auto lambda_connectToPlatform
+        static auto lambda_connect
             = [&]() -> bool
         {
+            // log
+            LogInfo("[Umbrella]"sv)
+                << "lambda_connect(): entry"sv;
+
             // try ethernet first
             if(!connectNET(fsdi_apis, fsdi_platform_index, fsdi_platform_ip.data()))
             {
@@ -227,12 +239,24 @@ namespace Labsim::project::umbrella
                 {
                     // log
                     LogError("[Umbrella]"sv)
-                        << "Failed to connect to platform"sv;
+                        << "lambda_connect(): Failed to connect to platform"sv;
 
                     // fail...
                     return false;
+                }
+                else
+                {
+                    // log
+                    LogInfo("[Umbrella]"sv)
+                        << "lambda_connect(): successfuly connected to platform over USB."sv;
 
                 } /* if() */
+            }
+            else
+            {
+                // log
+                LogInfo("[Umbrella]"sv)
+                    << "lambda_connect(): successfuly connected to platform over ethernet."sv;
 
             } /* if() */
 
@@ -244,20 +268,32 @@ namespace Labsim::project::umbrella
             {
                 // log
                 LogError("[Umbrella]"sv)
-                    << "APIs does not match our..."sv;
+                    << "lambda_connect(): APIs does not match our..."sv;
 
                 // fail...
                 return false;
 
             } /* if() */
 
+            // log
+            LogInfo("[Umbrella]"sv)
+                << "lambda_connect(): everything ok."sv;
+
             // if this point is reached, then its a success
             return true;
-        }; /* lambda_connectToPlatform() */
 
-        static auto lambda_reinitUpstream
+            // log
+            LogInfo("[Umbrella]"sv)
+                << "lambda_connect(): exit"sv;
+        }; /* lambda_connect() */
+
+        static auto lambda_resetUpstream
             = [&]() -> void
         {
+            // log
+            LogInfo("[Umbrella]"sv)
+                << "lambda_resetUpstream(): entry"sv;
+
             // reset requested
             fsdi_requestedPosition.yaw
                 = fsdi_requestedPosition.pitch
@@ -266,11 +302,19 @@ namespace Labsim::project::umbrella
                 = fsdi_requestedPosition.sway
                 = fsdi_requestedPosition.surge
                 = 0.0f;
-        }; /* lambda_initUpstream() */
+
+            // log
+            LogInfo("[Umbrella]"sv)
+                << "lambda_resetUpstream(): exit"sv;
+        }; /* lambda_resetUpstream() */
 
         static auto lambda_buildUpstream
             = [&]() -> void
         {
+            // log
+            LogInfo("[Umbrella]"sv)
+                << "lambda_buildUpstream(): entry"sv;
+
             // encapsulate all calculus
             try
             {
@@ -389,6 +433,10 @@ namespace Labsim::project::umbrella
                     << boost::current_exception_diagnostic_information();
 
             } /* try() */
+
+            // log
+            LogInfo("[Umbrella]"sv)
+                << "lambda_buildUpstream(): exit"sv;
         }; /* lambda_buildUpstream */
 
         static auto lambda_sendUpstream
@@ -442,7 +490,7 @@ namespace Labsim::project::umbrella
             } /* if() */
         }; /* lambda_readActuator */
 
-        static auto lambda_logDataToFile
+        static auto lambda_processDownstream
             = [&]() -> void
         {
             // // NOTE: Displaying data is slow
@@ -453,7 +501,7 @@ namespace Labsim::project::umbrella
             //     printf("    Top Frame: roll %f, pitch %f, yaw %f, heave %f, surge %f, sway %f\n", topTablePos[i].roll, topTablePos[i].pitch, topTablePos[i].yaw, topTablePos[i].heave, topTablePos[i].surge, topTablePos[i].sway);
             //     static_assert(FSDI_MotorsCount == 6, "");
             // }
-        }; /* lambda_logDataToFile */
+        }; /* lambda_processDownstream */
 
         static auto lambda_cleanup
             = [&]() -> void
@@ -471,11 +519,11 @@ namespace Labsim::project::umbrella
         //                                 PROCESSING LOOP                                  //
         // ================================================================================ //
 
-        // config
+        // configure APIs structs
         lambda_configure();
 
-        // connect
-        if(!lambda_connectToPlatform())
+        // connect to platform
+        if(!lambda_connect())
         {
             // failed, return
             return;
@@ -490,11 +538,11 @@ namespace Labsim::project::umbrella
             ticking_platform_elapsed = (ticking_loop_start - ticking_platform_start);
 
             // call lambdas
-            lambda_reinitUpstream();
+            lambda_resetUpstream();
             lambda_buildUpstream();
             lambda_sendUpstream();
             lambda_readDownstream();
-            lambda_logDataToFile();
+            lambda_processDownstream();
 
             // unpdate end timings
             ticking_loop_end     = std::chrono::high_resolution_clock::now();
