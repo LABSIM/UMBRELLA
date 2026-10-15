@@ -83,7 +83,7 @@ namespace Labsim::project::umbrella
             -> bool;
 
         auto
-        Process()
+        Process(double const & _elapsed_tick_count)
             -> bool;
 
         auto
@@ -91,6 +91,28 @@ namespace Labsim::project::umbrella
             -> bool;
 
     private:
+
+        //  internal in processing loop methods 
+
+        auto 
+        ResetUpstream()
+            -> bool;
+
+        auto 
+        BuildUpstream(double const & _elapsed_tick_count)
+            -> bool;
+
+        auto 
+        SendUpstream()
+            -> bool;
+
+        auto 
+        ReadDownstream()
+            -> bool;
+
+        auto 
+        ProcessDownstream()
+            -> bool;
 
         // the ForceSetDI motion platform API members
 

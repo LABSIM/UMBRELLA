@@ -25,7 +25,9 @@
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/program_options.hpp>
 
-#include <ranges>
+#include <string> 
+#include <string_view> 
+// #include <ranges>
 #include <codecvt>
 
 using namespace std::literals::string_literals;
@@ -56,6 +58,14 @@ namespace Labsim::project::umbrella
             using ms_type = decltype(self_type::_s_default_idle_init_duration_ms.count());
             ms_type idle_init_duration_buf{};
             ms_type target_loop_period_buf{};
+            auto converter = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>{};   
+            auto default_fsdi_platform_sn 
+                = std::string{ 
+                    converter.to_bytes(
+                        std::wstring{self_type::_s_default_fsdi_platform_sn}
+                    )
+                };
+            std::string fsdi_platform_sn{};
 
             // Declare groups of options that will be used
             auto cmdline_options
@@ -102,7 +112,7 @@ namespace Labsim::project::umbrella
                 )
                 (
                     "patform-sn",
-                    po::value< std::wstring >(&this->m_FSDIPlatformSN)->default_value(std::wstring{self_type::_s_default_fsdi_platform_sn}),
+                    po::value< std::string >(&fsdi_platform_sn)->default_value(default_fsdi_platform_sn),
                     "the MotionsSystems platform Serial Number for secondary USB failsafe"
                 )
                 (
@@ -191,6 +201,7 @@ namespace Labsim::project::umbrella
             } /* if() */
 
             // inject tmp vars into member
+            this->m_FSDIPlatformSN   = converter.from_bytes(fsdi_platform_sn);
             this->m_IdleInitDuration = std::chrono::milliseconds(idle_init_duration_buf);
             this->m_TargetLoopPeriod = std::chrono::milliseconds(target_loop_period_buf);
 
@@ -200,7 +211,7 @@ namespace Labsim::project::umbrella
                 << "\n[FSDIPlatformIndex] = "sv << this->getFSDIPlatformIndex()
                 << "\n[FSDIPlatformCount] = "sv << this->getFSDIPlatformCount()
                 << "\n[FSDIPlatformIP] = "sv << this->getFSDIPlatformIP()
-                << "\n[FSDIPlatformSN] = "sv << std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>{}.to_bytes(this->getFSDIPlatformSN())
+                << "\n[FSDIPlatformSN] = "sv << converter.to_bytes(this->getFSDIPlatformSN())
                 << "\n[IdleInitDuration] = "sv << this->getIdleInitDuration()
                 << "\n[TargetLoopPeriod] = "sv << this->getTargetLoopPeriod()
                 << "\n[S1Frequency] = "sv << this->getS1Frequency()

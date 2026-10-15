@@ -96,14 +96,35 @@ namespace Labsim::project::umbrella
 
             } /* if() */
 
-            // TODO ! 
+            // configure APIs structs
+            if(!MotionPlatformManager::get()->Configure())
+            { 
+                // debug
+                Labsim::LogDebug("[Umbrella]"sv)
+                    << "ApplicationManager::Initialize() : failed to configure the motion platform APIs"sv;
 
-            using MPMng = MotionPlatformManager;
+                // switch status
+                status = status_code::UMBRELLA_LIB_EXIT_;
 
+                // exit
+                return status;
 
+            } /* if() */
 
+            // connect to platform
+            if(!MotionPlatformManager::get()->Connect())
+            { 
+                // debug
+                Labsim::LogDebug("[Umbrella]"sv)
+                    << "ApplicationManager::Initialize() : failed to connect to the motion platform"sv;
 
+                // switch status
+                status = status_code::UMBRELLA_LIB_EXIT_;
 
+                // exit
+                return status;
+
+            } /* if() */
  
             // debug
             Labsim::LogDebug("[Umbrella]"sv)
@@ -160,19 +181,46 @@ namespace Labsim::project::umbrella
         // set default to error
         auto status{status_code::UMBRELLA_LIB_ERROR_};
 
+        // ticking mechanism
+        static auto const ticking_platform_start   = std::chrono::high_resolution_clock::now();
+        static auto       ticking_platform_elapsed = std::chrono::duration< double >{std::chrono::high_resolution_clock::now() - ticking_platform_start};
+        static auto       ticking_loop_start       = std::chrono::high_resolution_clock::now();
+        static auto       ticking_loop_end         = std::chrono::high_resolution_clock::now();
+        static auto       ticking_loop_elapsed     = std::chrono::duration< double, std::milli >{ticking_loop_end - ticking_loop_start};
+
         // encapsulate
         try
         {
             
-            // TODO ! 
+            // infinite stim loop
+            while(true)
+            {
+                // update ticking
+                ticking_loop_start       = std::chrono::high_resolution_clock::now();
+                ticking_platform_elapsed = (ticking_loop_start - ticking_platform_start);
 
-            using MPMng = MotionPlatformManager;
+                // process motion
+                MotionPlatformManager::get()->Process(ticking_platform_elapsed.count());
 
+                // unpdate end timings
+                ticking_loop_end     = std::chrono::high_resolution_clock::now();
+                ticking_loop_elapsed = (ticking_loop_end - ticking_loop_start);
 
+                // check objectives
+                if(ticking_loop_elapsed > this->getOptions().getTargetLoopPeriod())
+                {
+                    // simply log overflow
+                    LogWarn("[Umbrella]"sv)
+                        << " => main loop has overshoot target period : current["sv
+                        << ticking_loop_elapsed
+                        << "] > target ["sv
+                        <<  this->getOptions().getTargetLoopPeriod()
+                        << "]"sv;
 
+                } /* if() */
 
-
-
+            } /* while() */
+            
             // debug
             Labsim::LogDebug("[Umbrella]"sv)
                 << "ApplicationManager::Run() : end"sv;
