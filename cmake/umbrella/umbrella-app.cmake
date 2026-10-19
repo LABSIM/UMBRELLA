@@ -84,8 +84,8 @@ target_sources(
 target_link_libraries(
     Umbrella-app
     PRIVATE
-        Boost::headers
         Umbrella
+        Boost::headers
 )
 
 ####################################################################

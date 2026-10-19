@@ -50,12 +50,12 @@ namespace Labsim::project::umbrella
     auto
     ApplicationManager::Initialize(
         int const & _argc,
-        char *      pArgv[]
+        char **     pArgv
     )
         -> status_code_type
     {
         // debug
-        Labsim::LogInfo("[Umbrella]"sv)
+        Labsim::LogDebug("[Umbrella]"sv)
             << "ApplicationManager::Initialize() : call"sv;
 
         // set default to error
@@ -176,7 +176,7 @@ namespace Labsim::project::umbrella
         -> status_code_type
     {
         // debug
-        Labsim::LogInfo("[Umbrella]"sv)
+        Labsim::LogDebug("[Umbrella]"sv)
             << "ApplicationManager::Run() : call"sv;
 
         // set default to error
@@ -207,7 +207,7 @@ namespace Labsim::project::umbrella
                         << "ApplicationManager::Run() : motion platform failed to process..."sv;
 
                     // switch status
-                    status = status_code::UMBRELLA_LIB_EXIT_;
+                    status = status_code::UMBRELLA_LIB_ERROR_UNKNOWN_;
 
                     // exit
                     return status;
@@ -282,7 +282,7 @@ namespace Labsim::project::umbrella
         -> status_code_type
     {
         // debug
-        Labsim::LogInfo("[Umbrella]"sv)
+        Labsim::LogDebug("[Umbrella]"sv)
             << "ApplicationManager::Close() : call"sv;
 
         // set default to error

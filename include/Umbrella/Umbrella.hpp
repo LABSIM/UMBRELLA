@@ -22,20 +22,25 @@
 
 #include <Umbrella/Umbrella_API.hpp>
 
-// #include <cstdint>
-// #include <string>
-// #include <vector>
-
 // avoid namespace pollution
 namespace Labsim::project::umbrella
 {
 
-    // entry point
+    // simple entry points
+
     UMBRELLA_LIB_API auto
-    processMain(
-        int const & _argc,
-        char *      pArgv[]
-    ) -> int;
+    Umbrella_Initialize(
+        int     argc,
+        char ** pArgv
+    ) -> status_code_type;
+
+    UMBRELLA_LIB_API auto
+    Umbrella_Run()
+        -> status_code_type;
+
+    UMBRELLA_LIB_API auto
+    Umbrella_Close()
+        -> status_code_type;
 
 } // namespace Labsim::project::umbrella
 

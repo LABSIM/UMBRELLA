@@ -19,21 +19,58 @@
 
 #include <Umbrella/Umbrella.hpp>
 
+#include <cstdlib>
+#include <iostream>
+
+using namespace Labsim::project::umbrella;
+
 auto
 main(
-    int    argc,
-    char * pArgv[]
+    int     argc,
+    char ** pArgv
 )
     -> int
 {
-    // auto safe_argc
-    //     = std::size_t(argc);
+    status_code lib_status;
 
-    // auto safe_argv
-    //     = std::vector< std::string >{
-    //         pArgv,
-    //         pArgv + argc
-    //     };
+    //
+    // easy peasy ==> init -> run -> close
+    //
+    lib_status = Umbrella_Initialize(argc, pArgv);
+    if(lib_status != status_code::UMBRELLA_LIB_OK_)
+    {
+        if(lib_status != status_code::UMBRELLA_LIB_EXIT_)
+        {
+            std::cerr << "[Umbrella-app] - lib failed with status { Umbrella_Initialize() = [" << (int)lib_status << "] }, exiting..." << std::endl;
+            return EXIT_FAILURE;
+        }
+        // clean exit required
+        return EXIT_SUCCESS;
+    };
+    lib_status = Umbrella_Run();
+    if(lib_status != status_code::UMBRELLA_LIB_OK_)
+    {
+        if(lib_status != status_code::UMBRELLA_LIB_EXIT_)
+        {
+            std::cerr << "[Umbrella-app] - lib failed with status { Umbrella_Run() = [" << (int)lib_status << "] }, exiting..." << std::endl;
+            return EXIT_FAILURE;
+        }
+        // clean exit required
+        return EXIT_SUCCESS;
+    };
+    lib_status = Umbrella_Close();
+    if(lib_status != status_code::UMBRELLA_LIB_OK_)
+    {
+        if(lib_status != status_code::UMBRELLA_LIB_EXIT_)
+        {
+            std::cerr << "[Umbrella-app] - lib failed with status { Umbrella_Close() = [" << (int)lib_status << "] }, exiting..." << std::endl;
+            return EXIT_FAILURE;
+        }
+        // clean exit required
+        return EXIT_SUCCESS;
+    };
 
-    return Labsim::project::umbrella::processMain(argc, pArgv);
-}
+    // success !
+    return EXIT_SUCCESS;
+
+} /* main() */

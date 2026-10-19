@@ -116,29 +116,14 @@ namespace Labsim::project::umbrella
                     "the MotionsSystems platform Serial Number for secondary USB failsafe"
                 )
                 (
-                    "s1-frequency",
-                    po::value< double >(&this->m_S1Frequency)->default_value(self_type::_s_default_S1_frequency_hz),
-                    "The #1 simulation frequency in Hertz"
+                    "frequency",
+                    po::value< double >(&this->m_frequency)->default_value(self_type::_s_default_S1_frequency_hz),
+                    "The platform simulation frequency in Hertz"
                 )
                 (
-                    "s1-amplitude",
-                    po::value< double >(&this->m_S1Amplitude)->default_value(self_type::_s_default_S1_amplitude_mm),
-                    "The #1 simulation amplitude in Millimeter"
-                )
-                (
-                    "s2-frequency",
-                    po::value< double >(&this->m_S2Frequency)->default_value(self_type::_s_default_S2_frequency_hz),
-                    "The #2 simulation frequency in Hertz"
-                )
-                (
-                    "s2-amplitude",
-                    po::value< double >(&this->m_S2Amplitude)->default_value(self_type::_s_default_S2_amplitude_mm),
-                    "The #2 simulation amplitude in Millimeter"
-                )
-                (
-                    "x-offset",
-                    po::value< double >(&this->m_XAxisPhaseOffset)->default_value(self_type::_s_default_x_axis_phase_offset_s),
-                    "The platform X axis simulation phase offset in Second"
+                    "amplitude",
+                    po::value< double >(&this->m_amplitude)->default_value(self_type::_s_default_S1_amplitude_mm),
+                    "The platform simulation amplitude in Millimeter"
                 )
                 (
                     "y-offset",
@@ -207,20 +192,17 @@ namespace Labsim::project::umbrella
 
             // log result
             Labsim::LogDebug("[Umbrella]"sv)
-                << "CommandLineOptions::Parse() : Command line parsing OK ! found"sv
-                << "\n[FSDIPlatformIndex] = "sv << this->getFSDIPlatformIndex()
-                << "\n[FSDIPlatformCount] = "sv << this->getFSDIPlatformCount()
-                << "\n[FSDIPlatformIP] = "sv << this->getFSDIPlatformIP()
-                << "\n[FSDIPlatformSN] = "sv << converter.to_bytes(this->getFSDIPlatformSN())
-                << "\n[IdleInitDuration] = "sv << this->getIdleInitDuration()
-                << "\n[TargetLoopPeriod] = "sv << this->getTargetLoopPeriod()
-                << "\n[S1Frequency] = "sv << this->getS1Frequency()
-                << "\n[S1Amplitude] = "sv << this->getS1Amplitude()
-                << "\n[S2Frequency] = "sv << this->getS2Frequency()
-                << "\n[S2Amplitude] = "sv << this->getS2Amplitude()
-                << "\n[XAxisPhaseOffset] = "sv << this->getXAxisPhaseOffset()
-                << "\n[YAxisPhaseOffset] = "sv << this->getYAxisPhaseOffset()
-                << "\n[ZAxisPhaseOffset] = "sv << this->getZAxisPhaseOffset();
+                << "CommandLineOptions::Parse() : Command line parsing OK ! found {"sv
+                << " FSDIPlatformIndex = "sv << this->getFSDIPlatformIndex() << ","sv
+                << " FSDIPlatformCount = "sv << this->getFSDIPlatformCount() << ","sv
+                << " FSDIPlatformIP = "sv << this->getFSDIPlatformIP() << ","sv
+                << " FSDIPlatformSN = "sv << converter.to_bytes(this->getFSDIPlatformSN()) << ","sv
+                << " IdleInitDuration = "sv << this->getIdleInitDuration() << ","sv
+                << " TargetLoopPeriod = "sv << this->getTargetLoopPeriod() << ","sv
+                << " Frequency = "sv << this->getFrequency() << ","sv
+                << " Amplitude = "sv << this->getAmplitude() << ","sv
+                << " YAxisPhaseOffset = "sv << this->getYAxisPhaseOffset() << ","sv
+                << " ZAxisPhaseOffset = "sv << this->getZAxisPhaseOffset() << "}"sv;
 
             // update status
             status = CLI_OPTIONS_OK_;

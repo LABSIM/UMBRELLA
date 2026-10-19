@@ -57,7 +57,7 @@ namespace Labsim::project::umbrella
         // variable timings
 
         static constexpr auto const _s_default_idle_init_duration_ms = 500ms;
-        static constexpr auto const _s_default_target_loop_period_ms = 100ms;
+        static constexpr auto const _s_default_target_loop_period_ms = 10ms;
 
         // ForceSeatDI
 
@@ -91,7 +91,6 @@ namespace Labsim::project::umbrella
         // Y axis : has offset
         // Z axis : has offset
         //
-        [[maybe_unused]] static constexpr auto const _s_default_x_axis_phase_offset_s = 0.0;
         [[maybe_unused]] static constexpr auto const _s_default_y_axis_phase_offset_s = 5.0;
         [[maybe_unused]] static constexpr auto const _s_default_z_axis_phase_offset_s = 7.0;
 
@@ -176,38 +175,17 @@ namespace Labsim::project::umbrella
         };
 
         [[nodiscard]] constexpr auto
-        getS1Frequency() const
+        getFrequency() const
             -> decltype(auto)
         {
-            return this->m_S1Frequency;
+            return this->m_frequency;
         };
 
         [[nodiscard]] constexpr auto
-        getS1Amplitude() const
+        getAmplitude() const
             -> decltype(auto)
         {
-            return this->m_S1Amplitude;
-        };
-
-        [[nodiscard]] constexpr auto
-        getS2Frequency() const
-            -> decltype(auto)
-        {
-            return this->m_S2Frequency;
-        };
-
-        [[nodiscard]] constexpr auto
-        getS2Amplitude() const
-            -> decltype(auto)
-        {
-            return this->m_S2Amplitude;
-        };
-
-        [[nodiscard]] constexpr auto
-        getXAxisPhaseOffset() const
-            -> decltype(auto)
-        {
-            return this->m_XAxisPhaseOffset;
+            return this->m_amplitude;
         };
 
         [[nodiscard]] constexpr auto
@@ -234,11 +212,8 @@ namespace Labsim::project::umbrella
         std::wstring              m_FSDIPlatformSN;
         std::chrono::milliseconds m_IdleInitDuration{};
         std::chrono::milliseconds m_TargetLoopPeriod{};
-        double                    m_S1Frequency{};
-        double                    m_S1Amplitude{};
-        double                    m_S2Frequency{};
-        double                    m_S2Amplitude{};
-        double                    m_XAxisPhaseOffset{};
+        double                    m_frequency{};
+        double                    m_amplitude{};
         double                    m_YAxisPhaseOffset{};
         double                    m_ZAxisPhaseOffset{};
 

@@ -47,7 +47,8 @@ using namespace std::literals::chrono_literals;
 // avoid namespace pollution
 namespace Labsim::project::umbrella
 {
-    // anonymous
+    // NOLINTBEGIN
+    // anonymous namespace, direcly from ForceSeatDI API exemple...
     namespace
     {
 
@@ -159,6 +160,8 @@ namespace Labsim::project::umbrella
 
     } /* anonymous namespace */
 
+    // NOLINTEND
+
     MotionPlatformManager::MotionPlatformManager(
         base_type::_token_type const & _token
     ) noexcept
@@ -171,14 +174,16 @@ namespace Labsim::project::umbrella
         -> bool
     {
         // log
-        LogInfo("[Umbrella]"sv)
+        LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::Configure(): entry"sv;
+
+        static constexpr auto const _s_default_maxSpeed = 65535_UI16;
 
         // upstream
         // allocate & configure FSDI resquested struct
         memset(&this->m_fsdi_requestedPosition, 0, sizeof(this->m_fsdi_requestedPosition));
         this->m_fsdi_requestedPosition.structSize          = sizeof(this->m_fsdi_requestedPosition);
-        this->m_fsdi_requestedPosition.maxSpeed            = 65535;
+        this->m_fsdi_requestedPosition.maxSpeed            = _s_default_maxSpeed;
         this->m_fsdi_requestedPosition.pause               = FSDI_False;
         this->m_fsdi_requestedPosition.strategy            = FSDI_Strategy_BestMatch;
         this->m_fsdi_requestedPosition.accelerationProfile = FSDI_AP_Rapid;
@@ -190,7 +195,7 @@ namespace Labsim::project::umbrella
         this->m_fsdi_actualPlatformInfo.structSize     = sizeof(FSDI_PlatformInfo);
 
         // log
-        LogInfo("[Umbrella]"sv)
+        LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::Configure(): exit"sv;
 
         // success
@@ -203,12 +208,12 @@ namespace Labsim::project::umbrella
         -> bool
     {
         // log
-        LogInfo("[Umbrella]"sv)
+        LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::Connect(): entry"sv;
 
         // localc vars
-        static int32_t                   setting_index;
-        static int32_t                   setting_count;
+        static uint32_t                  setting_index;
+        static uint32_t                  setting_count;
         static std::string               setting_ip;
         static std::wstring              setting_sn;
         static std::chrono::milliseconds setting_idle_duration;
@@ -237,14 +242,12 @@ namespace Labsim::project::umbrella
 
                 // fail...
                 return false;
-            }
-            else
-            {
-                // log
-                LogInfo("[Umbrella]"sv)
-                    << "MotionPlatformManager::Connect(): successfuly connected to platform over USB."sv;
 
             } /* if() */
+
+            // log
+            LogInfo("[Umbrella]"sv)
+                << "MotionPlatformManager::Connect(): successfuly connected to platform over USB."sv;
         }
         else
         {
@@ -270,7 +273,7 @@ namespace Labsim::project::umbrella
         } /* if() */
 
         // log
-        LogInfo("[Umbrella]"sv)
+        LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::Connect(): exit"sv;
 
         // if this point is reached, then its a success
@@ -351,7 +354,7 @@ namespace Labsim::project::umbrella
         -> bool
     {
         // log
-        LogInfo("[Umbrella]"sv)
+        LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::Cleanup(): entry"sv;
 
         // cleanup
@@ -363,7 +366,7 @@ namespace Labsim::project::umbrella
         } /* for() */
 
         // log
-        LogInfo("[Umbrella]"sv)
+        LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::Cleanup(): exit"sv;
 
         // if reached then it's a success
@@ -376,7 +379,7 @@ namespace Labsim::project::umbrella
         -> bool
     {
         // log
-        LogInfo("[Umbrella]"sv)
+        LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::ResetUpstream(): entry"sv;
 
         // reset requested
@@ -389,7 +392,7 @@ namespace Labsim::project::umbrella
             = 0.0F;
 
         // log
-        LogInfo("[Umbrella]"sv)
+        LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::ResetUpstream(): exit"sv;
 
         // if this point is reached, then success
@@ -404,7 +407,7 @@ namespace Labsim::project::umbrella
         -> bool
     {
         // log
-        LogInfo("[Umbrella]"sv)
+        LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::BuildUpstream(): entry"sv;
 
         // invariant
@@ -415,7 +418,6 @@ namespace Labsim::project::umbrella
         static bool   bHasInit = false;
         static double setting_amplitude;
         static double setting_frequency;
-        static double setting_x_axis_phase_offset;
         static double setting_y_axis_phase_offset;
         static double setting_z_axis_phase_offset;
 
@@ -425,9 +427,8 @@ namespace Labsim::project::umbrella
             auto handle = ApplicationManager::get();
 
             // extract settings
-            setting_amplitude = handle->getOptions().getS1Amplitude();
-            setting_frequency = handle->getOptions().getS1Amplitude();
-            // setting_x_axis_phase_offset = handle->getOptions().getXAxisPhaseOffset();
+            setting_amplitude           = handle->getOptions().getAmplitude();
+            setting_frequency           = handle->getOptions().getFrequency();
             setting_y_axis_phase_offset = handle->getOptions().getYAxisPhaseOffset();
             setting_z_axis_phase_offset = handle->getOptions().getZAxisPhaseOffset();
 
@@ -537,7 +538,7 @@ namespace Labsim::project::umbrella
         } /* try() */
 
         // log
-        LogInfo("[Umbrella]"sv)
+        LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::BuildUpstream(): exit"sv;
 
         // if this point is reached, then success
@@ -550,7 +551,7 @@ namespace Labsim::project::umbrella
         -> bool
     {
         // log
-        LogInfo("[Umbrella]"sv)
+        LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::SendUpstream(): entry"sv;
 
         // setting
@@ -565,7 +566,7 @@ namespace Labsim::project::umbrella
         );
 
         // log
-        LogInfo("[Umbrella]"sv)
+        LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::SendUpstream(): exit"sv;
 
         // if this point is reached, then success
@@ -578,7 +579,7 @@ namespace Labsim::project::umbrella
         -> bool
     {
         // log
-        LogInfo("[Umbrella]"sv)
+        LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::ReadDownstream(): entry"sv;
 
         // setting
@@ -622,7 +623,7 @@ namespace Labsim::project::umbrella
         } /* if() */
 
         // log
-        LogInfo("[Umbrella]"sv)
+        LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::ReadDownstream(): exit"sv;
 
         // if this point is reached, then success
@@ -635,7 +636,7 @@ namespace Labsim::project::umbrella
         -> bool
     {
         // log
-        LogInfo("[Umbrella]"sv)
+        LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::ProcessDownstream(): entry"sv;
 
         // // NOTE: Displaying data is slow
@@ -648,7 +649,7 @@ namespace Labsim::project::umbrella
         // }
 
         // log
-        LogInfo("[Umbrella]"sv)
+        LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::ProcessDownstream(): exit"sv;
 
         // if this point is reached, then success

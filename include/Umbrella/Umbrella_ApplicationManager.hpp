@@ -69,7 +69,7 @@ namespace Labsim::project::umbrella
             -> self_type & = delete; // methods
 
         auto
-        Initialize(int const & _argc, char * pArgv[])
+        Initialize(int const & _argc, char ** pArgv)
             -> status_code_type;
 
         auto
