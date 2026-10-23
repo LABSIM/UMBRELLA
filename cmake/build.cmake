@@ -31,7 +31,7 @@ endif()
 # set installation path
 set(
     CMAKE_INSTALL_PREFIX 
-    "${LABSIM_INSTALL_PREFIX}"
+    "${LABSIM_INSTALL_PREFIX}/${LABSIM_INSTALL_PATH}"
     CACHE PATH
         "Le path d'installation du projet"
         FORCE

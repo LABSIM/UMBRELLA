@@ -22,19 +22,48 @@
 
 #include <Ouranos/log/Ouranos_Logger_log.hpp>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/program_options.hpp>
 
+#include <codecvt>
 #include <string>
 #include <string_view>
-// #include <ranges>
-#include <codecvt>
 
 using namespace std::literals::string_literals;
 
 // avoid namespace pollution
 namespace Labsim::project::umbrella
 {
+
+    auto
+    operator>>(
+        std::istream &                  input,
+        CommandLineOptions::stim_mode & mode
+    )
+        -> std::istream &
+    {
+        std::string token;
+        input >> token;
+
+        boost::to_upper(token);
+
+        if(token == "S1" || token == "STIM1" || token == "1")
+        {
+            mode = CommandLineOptions::stim_mode::S1_;
+        }
+        else if(token == "S2" || token == "STIM2" || token == "2")
+        {
+            mode = CommandLineOptions::stim_mode::S2_;
+        }
+        else
+        {
+            input.setstate(std::ios_base::failbit);
+        }
+
+        return input;
+
+    } /* friend operator>>() */
 
     auto
     CommandLineOptions::Parse()
@@ -116,14 +145,29 @@ namespace Labsim::project::umbrella
                     "the MotionsSystems platform Serial Number for secondary USB failsafe"
                 )
                 (
-                    "frequency",
-                    po::value< double >(&this->m_frequency)->default_value(self_type::_s_default_S1_frequency_hz),
-                    "The platform simulation frequency in Hertz"
+                    "stim-mode",
+                    po::value< self_type::stim_mode >(&this->m_stimMode)->default_value(self_type::_s_default_stim_mode),
+                    "The active stim mode to use : either [stim1] or [stim2]"
                 )
                 (
-                    "amplitude",
-                    po::value< double >(&this->m_amplitude)->default_value(self_type::_s_default_S1_amplitude_mm),
-                    "The platform simulation amplitude in Millimeter"
+                    "stim1-frequency",
+                    po::value< double >(&this->m_stim1Frequency)->default_value(self_type::_s_default_stim1_frequency_hz),
+                    "The #1 platform simulation frequency in Hertz"
+                )
+                (
+                    "stim1-amplitude",
+                    po::value< double >(&this->m_stim1Amplitude)->default_value(self_type::_s_default_stim1_amplitude_mm),
+                    "The #1 platform simulation amplitude in Millimeter"
+                )
+                (
+                    "stim2-frequency",
+                    po::value< double >(&this->m_stim2Frequency)->default_value(self_type::_s_default_stim2_frequency_hz),
+                    "The #2 platform simulation frequency in Hertz"
+                )
+                (
+                    "stim2-amplitude",
+                    po::value< double >(&this->m_stim2Amplitude)->default_value(self_type::_s_default_stim2_amplitude_mm),
+                    "The #2 platform simulation amplitude in Millimeter"
                 )
                 (
                     "y-offset",
@@ -187,22 +231,25 @@ namespace Labsim::project::umbrella
 
             // inject tmp vars into member
             this->m_FSDIPlatformSN   = converter.from_bytes(fsdi_platform_sn);
-            this->m_IdleInitDuration = std::chrono::milliseconds(idle_init_duration_buf);
-            this->m_TargetLoopPeriod = std::chrono::milliseconds(target_loop_period_buf);
+            this->m_idleInitDuration = std::chrono::milliseconds(idle_init_duration_buf);
+            this->m_targetLoopPeriod = std::chrono::milliseconds(target_loop_period_buf);
 
             // log result
             Labsim::LogDebug("[Umbrella]"sv)
                 << "CommandLineOptions::Parse() : Command line parsing OK ! found {"sv
-                << " FSDIPlatformIndex = "sv << this->getFSDIPlatformIndex() << ","sv
-                << " FSDIPlatformCount = "sv << this->getFSDIPlatformCount() << ","sv
-                << " FSDIPlatformIP = "sv << this->getFSDIPlatformIP() << ","sv
-                << " FSDIPlatformSN = "sv << converter.to_bytes(this->getFSDIPlatformSN()) << ","sv
-                << " IdleInitDuration = "sv << this->getIdleInitDuration() << ","sv
-                << " TargetLoopPeriod = "sv << this->getTargetLoopPeriod() << ","sv
-                << " Frequency = "sv << this->getFrequency() << ","sv
-                << " Amplitude = "sv << this->getAmplitude() << ","sv
-                << " YAxisPhaseOffset = "sv << this->getYAxisPhaseOffset() << ","sv
-                << " ZAxisPhaseOffset = "sv << this->getZAxisPhaseOffset() << "}"sv;
+                << "FSDIPlatformIndex = "sv << this->getFSDIPlatformIndex() << ","
+                << "FSDIPlatformCount = "sv << this->getFSDIPlatformCount() << ","
+                << "FSDIPlatformIP = "sv << this->getFSDIPlatformIP() << ","
+                << "FSDIPlatformSN = "sv << converter.to_bytes(this->getFSDIPlatformSN()) << ","
+                << "IdleInitDuration = "sv << this->getIdleInitDuration() << ","
+                << "TargetLoopPeriod = "sv << this->getTargetLoopPeriod() << ","
+                << "StimMode = "sv << titans::ouranos::to_underlying(this->getStimMode()) << ","
+                << "Stim1Frequency = "sv << this->getStim1Frequency() << ","
+                << "Stim1Amplitude = "sv << this->getStim1Amplitude() << ","
+                << "Stim2Frequency = "sv << this->getStim2Frequency() << ","
+                << "Stim2Amplitude = "sv << this->getStim2Amplitude() << ","
+                << "YAxisPhaseOffset = "sv << this->getYAxisPhaseOffset() << ","
+                << "ZAxisPhaseOffset = "sv << this->getZAxisPhaseOffset() << "}"sv;
 
             // update status
             status = CLI_OPTIONS_OK_;

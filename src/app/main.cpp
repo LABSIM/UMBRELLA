@@ -31,7 +31,7 @@ main(
 )
     -> int
 {
-    status_code lib_status;
+    status_code lib_status{status_code::UMBRELLA_UNDEFINED_};
 
     //
     // easy peasy ==> init -> run -> close
@@ -41,7 +41,11 @@ main(
     {
         if(lib_status != status_code::UMBRELLA_LIB_EXIT_)
         {
-            std::cerr << "[Umbrella-app] - lib failed with status { Umbrella_Initialize() = [" << (int)lib_status << "] }, exiting..." << std::endl;
+            std::cerr 
+                << "[Umbrella-app] - lib failed with status { Umbrella_Initialize() = [" 
+                << (int)lib_status 
+                << "] }, exiting...\n"
+                << std::flush;
             return EXIT_FAILURE;
         }
         // clean exit required
@@ -52,7 +56,11 @@ main(
     {
         if(lib_status != status_code::UMBRELLA_LIB_EXIT_)
         {
-            std::cerr << "[Umbrella-app] - lib failed with status { Umbrella_Run() = [" << (int)lib_status << "] }, exiting..." << std::endl;
+            std::cerr 
+                << "[Umbrella-app] - lib failed with status { Umbrella_Run() = [" 
+                << (int)lib_status 
+                << "] }, exiting...\n"
+                << std::flush;
             return EXIT_FAILURE;
         }
         // clean exit required
@@ -63,7 +71,11 @@ main(
     {
         if(lib_status != status_code::UMBRELLA_LIB_EXIT_)
         {
-            std::cerr << "[Umbrella-app] - lib failed with status { Umbrella_Close() = [" << (int)lib_status << "] }, exiting..." << std::endl;
+            std::cerr 
+                << "[Umbrella-app] - lib failed with status { Umbrella_Close() = [" 
+                << (int)lib_status 
+                << "] }, exiting...\n"
+                << std::flush;
             return EXIT_FAILURE;
         }
         // clean exit required

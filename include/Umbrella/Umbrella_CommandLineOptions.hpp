@@ -26,6 +26,7 @@
 #include <Ouranos/Ouranos_Common.hpp>
 
 #include <chrono>
+#include <istream>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -68,21 +69,35 @@ namespace Labsim::project::umbrella
 
         // Stimulation default invariant
 
+        enum stim_mode
+        {
+            S1_ = 1,
+            S2_
+        };
+
+        friend auto
+        operator>>(
+            std::istream & input,
+            stim_mode &    mode
+        ) -> std::istream &;
+
+        static constexpr auto const _s_default_stim_mode = stim_mode::S1_;
+
         //
         // case 1
         // ---
         // Vol en turbulences modérées 0.2 Hz 20.0 mm
         //
-        [[maybe_unused]] static constexpr auto const _s_default_S1_frequency_hz = 0.2;
-        [[maybe_unused]] static constexpr auto const _s_default_S1_amplitude_mm = 20.0;
+        static constexpr auto const _s_default_stim1_frequency_hz = 0.2;
+        static constexpr auto const _s_default_stim1_amplitude_mm = 20.0;
 
         //
         // case 2
         // ---
         // Balourd rotor principal modéré 5.0 Hz 0.8 mm
         //
-        [[maybe_unused]] static constexpr auto const _s_default_S2_frequency_hz = 5.0;
-        [[maybe_unused]] static constexpr auto const _s_default_S2_amplitude_mm = 0.8;
+        static constexpr auto const _s_default_stim2_frequency_hz = 5.0;
+        static constexpr auto const _s_default_stim2_amplitude_mm = 0.8;
 
         //
         // phase offset
@@ -91,8 +106,8 @@ namespace Labsim::project::umbrella
         // Y axis : has offset
         // Z axis : has offset
         //
-        [[maybe_unused]] static constexpr auto const _s_default_y_axis_phase_offset_s = 5.0;
-        [[maybe_unused]] static constexpr auto const _s_default_z_axis_phase_offset_s = 7.0;
+        static constexpr auto const _s_default_y_axis_phase_offset_s = 5.0;
+        static constexpr auto const _s_default_z_axis_phase_offset_s = 7.0;
 
         // using enum
 
@@ -164,28 +179,49 @@ namespace Labsim::project::umbrella
         getIdleInitDuration() const
             -> decltype(auto)
         {
-            return this->m_IdleInitDuration;
+            return this->m_idleInitDuration;
         };
 
         [[nodiscard]] constexpr auto
         getTargetLoopPeriod() const
             -> decltype(auto)
         {
-            return this->m_TargetLoopPeriod;
+            return this->m_targetLoopPeriod;
         };
 
         [[nodiscard]] constexpr auto
-        getFrequency() const
+        getStimMode() const
             -> decltype(auto)
         {
-            return this->m_frequency;
+            return this->m_stimMode;
         };
 
         [[nodiscard]] constexpr auto
-        getAmplitude() const
+        getStim1Frequency() const
             -> decltype(auto)
         {
-            return this->m_amplitude;
+            return this->m_stim1Frequency;
+        };
+
+        [[nodiscard]] constexpr auto
+        getStim1Amplitude() const
+            -> decltype(auto)
+        {
+            return this->m_stim1Amplitude;
+        };
+
+        [[nodiscard]] constexpr auto
+        getStim2Frequency() const
+            -> decltype(auto)
+        {
+            return this->m_stim2Frequency;
+        };
+
+        [[nodiscard]] constexpr auto
+        getStim2Amplitude() const
+            -> decltype(auto)
+        {
+            return this->m_stim2Amplitude;
         };
 
         [[nodiscard]] constexpr auto
@@ -210,10 +246,13 @@ namespace Labsim::project::umbrella
         uint32_t                  m_FSDIPlatformCount{};
         std::string               m_FSDIPlatformIP;
         std::wstring              m_FSDIPlatformSN;
-        std::chrono::milliseconds m_IdleInitDuration{};
-        std::chrono::milliseconds m_TargetLoopPeriod{};
-        double                    m_frequency{};
-        double                    m_amplitude{};
+        std::chrono::milliseconds m_idleInitDuration{};
+        std::chrono::milliseconds m_targetLoopPeriod{};
+        stim_mode                 m_stimMode{};
+        double                    m_stim1Frequency{};
+        double                    m_stim1Amplitude{};
+        double                    m_stim2Frequency{};
+        double                    m_stim2Amplitude{};
         double                    m_YAxisPhaseOffset{};
         double                    m_ZAxisPhaseOffset{};
 

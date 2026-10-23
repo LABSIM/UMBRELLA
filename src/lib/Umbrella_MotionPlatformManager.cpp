@@ -427,8 +427,16 @@ namespace Labsim::project::umbrella
             auto handle = ApplicationManager::get();
 
             // extract settings
-            setting_amplitude           = handle->getOptions().getAmplitude();
-            setting_frequency           = handle->getOptions().getFrequency();
+            if(handle->getOptions().getStimMode() == CommandLineOptions::stim_mode::S1_)
+            {
+                setting_amplitude = handle->getOptions().getStim1Amplitude();
+                setting_frequency = handle->getOptions().getStim1Frequency();
+            }
+            else
+            {
+                setting_amplitude = handle->getOptions().getStim2Amplitude();
+                setting_frequency = handle->getOptions().getStim2Frequency();
+            }
             setting_y_axis_phase_offset = handle->getOptions().getYAxisPhaseOffset();
             setting_z_axis_phase_offset = handle->getOptions().getZAxisPhaseOffset();
 
