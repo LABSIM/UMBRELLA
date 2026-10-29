@@ -33,6 +33,8 @@
 #include <ctime>
 #include <dlfcn.h>
 #include <exception>
+#include <format>
+#include <fstream>
 #include <numbers>
 #include <string_view>
 #include <thread>
@@ -42,6 +44,7 @@
 #include "ForceSeatDI.h"
 
 using namespace std::literals::string_view_literals;
+using namespace std::literals::string_literals;
 using namespace std::literals::chrono_literals;
 
 // avoid namespace pollution
@@ -211,7 +214,8 @@ namespace Labsim::project::umbrella
         LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::Connect(): entry"sv;
 
-        // localc vars
+        // local vars
+        static bool                      setting_is_offline;
         static uint32_t                  setting_index;
         static uint32_t                  setting_count;
         static std::string               setting_ip;
@@ -222,6 +226,7 @@ namespace Labsim::project::umbrella
 
             auto handle = ApplicationManager::get();
 
+            setting_is_offline    = handle->getOptions().isOfflineSimulation();
             setting_index         = handle->getOptions().getFSDIPlatformIndex();
             setting_count         = handle->getOptions().getFSDIPlatformCount();
             setting_ip            = handle->getOptions().getFSDIPlatformIP();
@@ -229,6 +234,18 @@ namespace Labsim::project::umbrella
             setting_idle_duration = handle->getOptions().getIdleInitDuration();
 
         } /* release */
+
+        // check if offline sim is true
+        if(setting_is_offline)
+        {
+            // log
+            LogInfo("[Umbrella]"sv)
+                << "MotionPlatformManager::Connect(): offline simulation required, do not attempt to connect."sv;
+
+            // if this point is reached, then its a skip !
+            return true;
+
+        } /* if() */
 
         // try ethernet first
         if(!connectNET(this->m_fsdi_apis, setting_index, setting_ip.data()))
@@ -563,15 +580,22 @@ namespace Labsim::project::umbrella
             << "MotionPlatformManager::SendUpstream(): entry"sv;
 
         // setting
+        static auto const _setting_is_offline
+            = ApplicationManager::get()->getOptions().isOfflineSimulation();
         static auto const _setting_index
             = ApplicationManager::get()->getOptions().getFSDIPlatformIndex();
 
-        // send requested datas !
-        send(
-            this->m_fsdi_apis,
-            _setting_index,
-            this->m_fsdi_requestedPosition
-        );
+        // check
+        if(!_setting_is_offline)
+        {
+            // send requested datas !
+            send(
+                this->m_fsdi_apis,
+                _setting_index,
+                this->m_fsdi_requestedPosition
+            );
+
+        } /* if() */
 
         // log
         LogDebug("[Umbrella]"sv)
@@ -591,42 +615,49 @@ namespace Labsim::project::umbrella
             << "MotionPlatformManager::ReadDownstream(): entry"sv;
 
         // setting
+        static auto const _setting_is_offline
+            = ApplicationManager::get()->getOptions().isOfflineSimulation();
         static auto const _setting_index
             = ApplicationManager::get()->getOptions().getFSDIPlatformIndex();
 
-        // Read current actuators position
-
-        if(ForceSeatDI_GetActuatorsPosLog(
-               this->m_fsdi_apis.at(_setting_index),
-               &this->m_fsdi_actualPosition
-           )
-           != FSDI_True)
+        // check
+        if(!_setting_is_offline)
         {
-            // failed...
-            // printf("Failed to get actuator pos");
+            // Read current actuators position
 
-        } /* if() */
+            if(ForceSeatDI_GetActuatorsPosLog(
+                   this->m_fsdi_apis.at(_setting_index),
+                   &this->m_fsdi_actualPosition
+               )
+               != FSDI_True)
+            {
+                // failed...
+                // printf("Failed to get actuator pos");
 
-        if(ForceSeatDI_GetTopTablePosPhy(
-               this->m_fsdi_apis.at(_setting_index),
-               &this->m_fsdi_actualTopTablePosition
-           )
-           != FSDI_True)
-        {
-            // failed...
-            // printf("Failed to get top table pos");
+            } /* if() */
 
-        } /* if() */
+            if(ForceSeatDI_GetTopTablePosPhy(
+                   this->m_fsdi_apis.at(_setting_index),
+                   &this->m_fsdi_actualTopTablePosition
+               )
+               != FSDI_True)
+            {
+                // failed...
+                // printf("Failed to get top table pos");
 
-        if(ForceSeatDI_GetPlatformInfo(
-               this->m_fsdi_apis.at(_setting_index),
-               &this->m_fsdi_actualPlatformInfo
-           )
-           != FSDI_True)
-        {
-            // failed...
-            // printf("Failed to get platform info");
-            // printf("ErrorCode: %d", ForceSeatDI_GetRecentErrorCode(fsdi_apis.at(fsdi_platform_index)));
+            } /* if() */
+
+            if(ForceSeatDI_GetPlatformInfo(
+                   this->m_fsdi_apis.at(_setting_index),
+                   &this->m_fsdi_actualPlatformInfo
+               )
+               != FSDI_True)
+            {
+                // failed...
+                // printf("Failed to get platform info");
+                // printf("ErrorCode: %d", ForceSeatDI_GetRecentErrorCode(fsdi_apis.at(fsdi_platform_index)));
+
+            } /* if() */
 
         } /* if() */
 
@@ -646,6 +677,29 @@ namespace Labsim::project::umbrella
         // log
         LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::ProcessDownstream(): entry"sv;
+
+        // setting
+        static auto const _setting_is_offline
+            = ApplicationManager::get()->getOptions().isOfflineSimulation();
+
+        // check
+        if(_setting_is_offline)
+        {
+            // log to file
+            static auto const path        = "output_sim_"s + std::format("{0:%T}", std::chrono::high_resolution_clock::now()) + ".csv"s;
+            static auto       output_file = std::ofstream{path.data(), std::ios_base::out | std::ios_base::app};
+
+            output_file
+                << std::chrono::high_resolution_clock::now()
+                << ","sv
+                << this->m_fsdi_requestedPosition.sway
+                << ","sv
+                << this->m_fsdi_requestedPosition.heave
+                << ","sv
+                << this->m_fsdi_requestedPosition.surge
+                << "\n";
+
+        } /* if() */
 
         // // NOTE: Displaying data is slow
         // for(uint32_t i = 0; i < NumberOfPlatforms; ++i)

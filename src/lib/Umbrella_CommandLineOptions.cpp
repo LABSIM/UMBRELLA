@@ -115,6 +115,11 @@ namespace Labsim::project::umbrella
                     "produce help message"
                 )
                 (
+                    "offline-sim",
+                    po::bool_switch(&this->m_bOfflineSimulation),
+                    "Do not connect to the actual motion platform but simply output calculation in a file [output_sim.csv]"
+                )
+                (
                     "init-duration",
                     po::value< ms_type >(&idle_init_duration_buf)->default_value(self_type::_s_default_idle_init_duration_ms.count()),
                     "The idle init duration in ms"
@@ -237,6 +242,7 @@ namespace Labsim::project::umbrella
             // log result
             Labsim::LogDebug("[Umbrella]"sv)
                 << "CommandLineOptions::Parse() : Command line parsing OK ! found {"sv
+                << "IsOfflineSimulation = "sv << (this->isOfflineSimulation() ? "true"sv : "false"sv) << ","
                 << "FSDIPlatformIndex = "sv << this->getFSDIPlatformIndex() << ","
                 << "FSDIPlatformCount = "sv << this->getFSDIPlatformCount() << ","
                 << "FSDIPlatformIP = "sv << this->getFSDIPlatformIP() << ","

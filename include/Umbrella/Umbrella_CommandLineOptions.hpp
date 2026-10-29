@@ -148,6 +148,14 @@ namespace Labsim::project::umbrella
         // getter
 
         [[nodiscard]] constexpr auto
+        isOfflineSimulation() const
+            -> decltype(auto)
+        {
+            return this->m_bOfflineSimulation;
+        };
+
+
+        [[nodiscard]] constexpr auto
         getFSDIPlatformIndex() const
             -> decltype(auto)
         {
@@ -242,6 +250,7 @@ namespace Labsim::project::umbrella
 
         // members
 
+        bool                      m_bOfflineSimulation{};
         uint32_t                  m_FSDIPlatformIndex{};
         uint32_t                  m_FSDIPlatformCount{};
         std::string               m_FSDIPlatformIP;
