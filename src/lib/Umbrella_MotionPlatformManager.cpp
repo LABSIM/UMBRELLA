@@ -491,15 +491,12 @@ namespace Labsim::project::umbrella
                             (_two_constant * std::numbers::pi * _elapsed_tick_count)
                             / (_one_constant / setting_frequency)
                         )
-                        + (
-                            (std::numbers::pi / _two_constant)
-                            * (
-                                (_two_constant * std::numbers::pi * _elapsed_tick_count)
-                                / (
-                                    (_one_constant / setting_frequency) 
-                                    * setting_y_axis_phase_offset
-                                )
-                            )
+                        + ((std::numbers::pi / _two_constant)
+                           * ((_two_constant * std::numbers::pi * _elapsed_tick_count)
+                              / ((_one_constant / setting_frequency)
+                                 * setting_y_axis_phase_offset
+                              )
+                           )
                         )
                     )
                 );
@@ -516,15 +513,12 @@ namespace Labsim::project::umbrella
                             (_two_constant * std::numbers::pi * _elapsed_tick_count)
                             / (_one_constant / setting_frequency)
                         )
-                        + (
-                            (std::numbers::pi / _two_constant)
-                            * (
-                                (_two_constant * std::numbers::pi * _elapsed_tick_count)
-                                / (
-                                    (_one_constant / setting_frequency) 
-                                    * setting_z_axis_phase_offset
-                                )
-                            )
+                        + ((std::numbers::pi / _two_constant)
+                           * ((_two_constant * std::numbers::pi * _elapsed_tick_count)
+                              / ((_one_constant / setting_frequency)
+                                 * setting_z_axis_phase_offset
+                              )
+                           )
                         )
                     )
                 );
