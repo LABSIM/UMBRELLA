@@ -472,7 +472,7 @@ namespace Labsim::project::umbrella
             //
             this->m_fsdi_requestedPosition.sway
                 = boost::numeric_cast< FSDI_FLOAT >(
-                    (setting_amplitude / _mm_to_m_factor)
+                    setting_amplitude
                     * std::sin(
                         (_two_constant * std::numbers::pi * _elapsed_tick_count)
                         / (_one_constant / setting_frequency)
@@ -485,7 +485,7 @@ namespace Labsim::project::umbrella
             //
             this->m_fsdi_requestedPosition.heave
                 = boost::numeric_cast< FSDI_FLOAT >(
-                    (setting_amplitude / _mm_to_m_factor)
+                    setting_amplitude
                     * std::sin(
                         (
                             (_two_constant * std::numbers::pi * _elapsed_tick_count)
@@ -507,7 +507,7 @@ namespace Labsim::project::umbrella
             //
             this->m_fsdi_requestedPosition.surge
                 = boost::numeric_cast< FSDI_FLOAT >(
-                    (setting_amplitude / _mm_to_m_factor)
+                    setting_amplitude
                     * std::sin(
                         (
                             (_two_constant * std::numbers::pi * _elapsed_tick_count)
