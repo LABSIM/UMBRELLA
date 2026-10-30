@@ -429,6 +429,7 @@ namespace Labsim::project::umbrella
 
         // invariant
         static constexpr auto const _mm_to_m_factor = 1000.0;
+        static constexpr auto const _one_constant   = 1.0;
         static constexpr auto const _two_constant   = 2.0;
 
         // local vars
@@ -474,7 +475,7 @@ namespace Labsim::project::umbrella
                     (setting_amplitude / _mm_to_m_factor)
                     * std::sin(
                         (_two_constant * std::numbers::pi * _elapsed_tick_count)
-                        / setting_frequency
+                        / (_one_constant / setting_frequency)
                     )
                 );
 
@@ -488,12 +489,17 @@ namespace Labsim::project::umbrella
                     * std::sin(
                         (
                             (_two_constant * std::numbers::pi * _elapsed_tick_count)
-                            / setting_frequency
+                            / (_one_constant / setting_frequency)
                         )
-                        + ((std::numbers::pi / _two_constant)
-                           * ((_two_constant * std::numbers::pi * _elapsed_tick_count)
-                              / setting_y_axis_phase_offset
-                           )
+                        + (
+                            (std::numbers::pi / _two_constant)
+                            * (
+                                (_two_constant * std::numbers::pi * _elapsed_tick_count)
+                                / (
+                                    (_one_constant / setting_frequency) 
+                                    * setting_y_axis_phase_offset
+                                )
+                            )
                         )
                     )
                 );
@@ -508,12 +514,17 @@ namespace Labsim::project::umbrella
                     * std::sin(
                         (
                             (_two_constant * std::numbers::pi * _elapsed_tick_count)
-                            / setting_frequency
+                            / (_one_constant / setting_frequency)
                         )
-                        + ((std::numbers::pi / _two_constant)
-                           * ((_two_constant * std::numbers::pi * _elapsed_tick_count)
-                              / setting_z_axis_phase_offset
-                           )
+                        + (
+                            (std::numbers::pi / _two_constant)
+                            * (
+                                (_two_constant * std::numbers::pi * _elapsed_tick_count)
+                                / (
+                                    (_one_constant / setting_frequency) 
+                                    * setting_z_axis_phase_offset
+                                )
+                            )
                         )
                     )
                 );
@@ -594,6 +605,16 @@ namespace Labsim::project::umbrella
                 _setting_index,
                 this->m_fsdi_requestedPosition
             );
+        }
+        else
+        {
+            // log
+            LogInfo("[Umbrella]"sv)
+                << "MotionPlatformManager::SendUpstream(): API send("sv
+                << "heave:"sv << this->m_fsdi_requestedPosition.heave
+                << "/sway:"sv << this->m_fsdi_requestedPosition.sway
+                << "/surge:"sv << this->m_fsdi_requestedPosition.surge
+                << ")";
 
         } /* if() */
 

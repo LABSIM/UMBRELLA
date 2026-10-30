@@ -188,7 +188,7 @@ namespace Labsim::project::umbrella
 
         // ticking mechanism
         static auto const ticking_platform_start   = std::chrono::high_resolution_clock::now();
-        static auto       ticking_platform_elapsed = std::chrono::duration< double >{std::chrono::high_resolution_clock::now() - ticking_platform_start};
+        static auto       ticking_platform_elapsed = std::chrono::duration< double, std::ratio< 1 > >{std::chrono::high_resolution_clock::now() - ticking_platform_start};
         static auto       ticking_loop_start       = std::chrono::high_resolution_clock::now();
         static auto       ticking_loop_end         = std::chrono::high_resolution_clock::now();
         static auto       ticking_loop_elapsed     = std::chrono::duration< double, std::milli >{ticking_loop_end - ticking_loop_start};

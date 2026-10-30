@@ -240,21 +240,21 @@ namespace Labsim::project::umbrella
             this->m_targetLoopPeriod = std::chrono::milliseconds(target_loop_period_buf);
 
             // log result
-            Labsim::LogDebug("[Umbrella]"sv)
+            Labsim::LogInfo("[Umbrella]"sv)
                 << "CommandLineOptions::Parse() : Command line parsing OK ! found {"sv
-                << "IsOfflineSimulation = "sv << (this->isOfflineSimulation() ? "true"sv : "false"sv) << ","
-                << "FSDIPlatformIndex = "sv << this->getFSDIPlatformIndex() << ","
-                << "FSDIPlatformCount = "sv << this->getFSDIPlatformCount() << ","
-                << "FSDIPlatformIP = "sv << this->getFSDIPlatformIP() << ","
-                << "FSDIPlatformSN = "sv << converter.to_bytes(this->getFSDIPlatformSN()) << ","
-                << "IdleInitDuration = "sv << this->getIdleInitDuration() << ","
-                << "TargetLoopPeriod = "sv << this->getTargetLoopPeriod() << ","
-                << "StimMode = "sv << titans::ouranos::to_underlying(this->getStimMode()) << ","
-                << "Stim1Frequency = "sv << this->getStim1Frequency() << ","
-                << "Stim1Amplitude = "sv << this->getStim1Amplitude() << ","
-                << "Stim2Frequency = "sv << this->getStim2Frequency() << ","
-                << "Stim2Amplitude = "sv << this->getStim2Amplitude() << ","
-                << "YAxisPhaseOffset = "sv << this->getYAxisPhaseOffset() << ","
+                << "IsOfflineSimulation = "sv << (this->isOfflineSimulation() ? "true"sv : "false"sv) << ", "
+                << "FSDIPlatformIndex = "sv << this->getFSDIPlatformIndex() << ", "
+                << "FSDIPlatformCount = "sv << this->getFSDIPlatformCount() << ", "
+                << "FSDIPlatformIP = "sv << this->getFSDIPlatformIP() << ", "
+                << "FSDIPlatformSN = "sv << converter.to_bytes(this->getFSDIPlatformSN()) << ", "
+                << "IdleInitDuration = "sv << this->getIdleInitDuration() << ", "
+                << "TargetLoopPeriod = "sv << this->getTargetLoopPeriod() << ", "
+                << "StimMode = "sv << titans::ouranos::to_underlying(this->getStimMode()) << ", "
+                << "Stim1Frequency = "sv << this->getStim1Frequency() << ", "
+                << "Stim1Amplitude = "sv << this->getStim1Amplitude() << ", "
+                << "Stim2Frequency = "sv << this->getStim2Frequency() << ", "
+                << "Stim2Amplitude = "sv << this->getStim2Amplitude() << ", "
+                << "YAxisPhaseOffset = "sv << this->getYAxisPhaseOffset() << ", "
                 << "ZAxisPhaseOffset = "sv << this->getZAxisPhaseOffset() << "}"sv;
 
             // update status
