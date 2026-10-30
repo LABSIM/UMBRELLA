@@ -154,7 +154,6 @@ namespace Labsim::project::umbrella
             return this->m_bOfflineSimulation;
         };
 
-
         [[nodiscard]] constexpr auto
         getFSDIPlatformIndex() const
             -> decltype(auto)

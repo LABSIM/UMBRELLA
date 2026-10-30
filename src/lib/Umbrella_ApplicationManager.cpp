@@ -29,6 +29,7 @@
 #include <ranges>
 #include <span>
 #include <string_view>
+#include <thread>
 
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
@@ -182,6 +183,9 @@ namespace Labsim::project::umbrella
         // set default to error
         auto status{status_code::UMBRELLA_LIB_ERROR_};
 
+        // settings
+        static auto const setting_loop_period = this->getOptions().getTargetLoopPeriod();
+
         // ticking mechanism
         static auto const ticking_platform_start   = std::chrono::high_resolution_clock::now();
         static auto       ticking_platform_elapsed = std::chrono::duration< double >{std::chrono::high_resolution_clock::now() - ticking_platform_start};
@@ -219,15 +223,20 @@ namespace Labsim::project::umbrella
                 ticking_loop_elapsed = (ticking_loop_end - ticking_loop_start);
 
                 // check objectives
-                if(ticking_loop_elapsed > this->getOptions().getTargetLoopPeriod())
+                if(ticking_loop_elapsed > setting_loop_period)
                 {
                     // simply log overflow
                     LogWarn("[Umbrella]"sv)
                         << " => main loop has overshoot target period : current["sv
                         << ticking_loop_elapsed
                         << "] > target ["sv
-                        << this->getOptions().getTargetLoopPeriod()
+                        << setting_loop_period
                         << "]"sv;
+                }
+                else
+                {
+                    // wait the remaining
+                    std::this_thread::sleep_for(setting_loop_period - ticking_loop_elapsed);
 
                 } /* if() */
 
