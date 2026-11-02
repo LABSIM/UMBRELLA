@@ -647,7 +647,8 @@ namespace Labsim::project::umbrella
                != FSDI_True)
             {
                 // failed...
-                // printf("Failed to get actuator pos");
+                LogError("[Umbrella]"sv)
+                    << "MotionPlatformManager::ReadDownstream(): Failed to get actuator pos"sv;
 
             } /* if() */
 
@@ -658,7 +659,8 @@ namespace Labsim::project::umbrella
                != FSDI_True)
             {
                 // failed...
-                // printf("Failed to get top table pos");
+                LogError("[Umbrella]"sv)
+                    << "MotionPlatformManager::ReadDownstream(): Failed to get top table pos"sv;
 
             } /* if() */
 
@@ -669,8 +671,10 @@ namespace Labsim::project::umbrella
                != FSDI_True)
             {
                 // failed...
-                // printf("Failed to get platform info");
-                // printf("ErrorCode: %d", ForceSeatDI_GetRecentErrorCode(fsdi_apis.at(fsdi_platform_index)));
+                LogError("[Umbrella]"sv)
+                    << "MotionPlatformManager::ReadDownstream(): Failed to get platform info with [ErrorCode:"sv
+                    << ForceSeatDI_GetRecentErrorCode(this->m_fsdi_apis.at(_setting_index))
+                    << "]"sv;
 
             } /* if() */
 
@@ -686,35 +690,35 @@ namespace Labsim::project::umbrella
     } /* ReadDownstream() */
 
     auto
-    MotionPlatformManager::ProcessDownstream()
+    MotionPlatformManager::ProcessDownstream() const
         -> bool
     {
         // log
         LogDebug("[Umbrella]"sv)
             << "MotionPlatformManager::ProcessDownstream(): entry"sv;
 
-        // setting
-        static auto const _setting_is_offline
-            = ApplicationManager::get()->getOptions().isOfflineSimulation();
+        // log to file
+        static auto const path
+            = "umbrella_"s + std::format("{0:%T}", std::chrono::high_resolution_clock::now()) + ".csv"s;
+        static auto output_file
+            = std::ofstream{path.data(), std::ios_base::out | std::ios_base::app}
+              << "timestamp,requestedPosition.sway,requestedPosition.heave,requestedPosition.surge,actualPosition.sway,actualPosition.heave,actualPosition.surge\n"sv;
 
-        // check
-        if(_setting_is_offline)
-        {
-            // log to file
-            static auto const path        = "output_sim_"s + std::format("{0:%T}", std::chrono::high_resolution_clock::now()) + ".csv"s;
-            static auto       output_file = std::ofstream{path.data(), std::ios_base::out | std::ios_base::app};
-
-            output_file
-                << std::chrono::high_resolution_clock::now()
-                << ","sv
-                << this->m_fsdi_requestedPosition.sway
-                << ","sv
-                << this->m_fsdi_requestedPosition.heave
-                << ","sv
-                << this->m_fsdi_requestedPosition.surge
-                << "\n";
-
-        } /* if() */
+        output_file
+            << std::chrono::high_resolution_clock::now()
+            << ","sv
+            << this->m_fsdi_requestedPosition.sway
+            << ","sv
+            << this->m_fsdi_requestedPosition.heave
+            << ","sv
+            << this->m_fsdi_requestedPosition.surge
+            << ","sv
+            << this->m_fsdi_actualTopTablePosition.sway
+            << ","sv
+            << this->m_fsdi_actualTopTablePosition.heave
+            << ","sv
+            << this->m_fsdi_actualTopTablePosition.surge
+            << "\n";
 
         // // NOTE: Displaying data is slow
         // for(uint32_t i = 0; i < NumberOfPlatforms; ++i)

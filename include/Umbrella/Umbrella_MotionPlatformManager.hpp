@@ -111,7 +111,7 @@ namespace Labsim::project::umbrella
             -> bool;
 
         auto
-        ProcessDownstream()
+        ProcessDownstream() const
             -> bool;
 
         // the ForceSetDI motion platform API members
