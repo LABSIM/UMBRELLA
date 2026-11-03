@@ -25,7 +25,7 @@
 
 #include <Ouranos/pattern/Ouranos_Singleton_pattern.hpp>
 
-#include <string_view>
+#include <atomic>
 #include <vector>
 
 #include "ForceSeatDI.h"
@@ -113,6 +113,29 @@ namespace Labsim::project::umbrella
         auto
         ProcessDownstream() const
             -> bool;
+
+        [[nodiscard]] constexpr auto
+        HasUpstreamBeenInitialized() const
+            -> bool
+        {
+            return this->m_bUptreamInitialized;
+        }
+
+        constexpr void
+        MarkUpstreamAsInitialized()
+        {
+            this->m_bUptreamInitialized = true;
+        }
+
+        constexpr void
+        ResetUpstreamInitialization()
+        {
+            this->m_bUptreamInitialized = false;
+        }
+
+        // members
+        
+        std::atomic< bool >                 m_bUptreamInitialized{false};
 
         // the ForceSetDI motion platform API members
 

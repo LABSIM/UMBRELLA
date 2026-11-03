@@ -48,7 +48,11 @@ namespace Labsim::project::umbrella
 
         boost::to_upper(token);
 
-        if(token == "S1" || token == "STIM1" || token == "1")
+        if(token == "S0" || token == "STIM0" || token == "0")
+        {
+            mode = CommandLineOptions::stim_mode::S0_;
+        }
+        else if(token == "S1" || token == "STIM1" || token == "1")
         {
             mode = CommandLineOptions::stim_mode::S1_;
         }
@@ -115,9 +119,9 @@ namespace Labsim::project::umbrella
                     "produce help message"
                 )
                 (
-                    "offline-sim",
-                    po::bool_switch(&this->m_bOfflineSimulation),
-                    "Do not connect to the actual motion platform but simply output calculation in a file [output_sim.csv]"
+                    "debug-sim",
+                    po::bool_switch(&this->m_bDebugSimulation),
+                    "Do not connect to the actual motion platform but simply output internal calculation in a file [output_sim.csv]"
                 )
                 (
                     "init-duration",
@@ -152,7 +156,7 @@ namespace Labsim::project::umbrella
                 (
                     "stim-mode",
                     po::value< self_type::stim_mode >(&this->m_stimMode)->default_value(self_type::_s_default_stim_mode),
-                    "The active stim mode to use : either [stim1] or [stim2]"
+                    "The active stim mode to use : either [stim0(none)], [stim1(weak)] or [stim2(strong)]"
                 )
                 (
                     "stim1-frequency",
@@ -242,7 +246,7 @@ namespace Labsim::project::umbrella
             // log result
             Labsim::LogInfo("[Umbrella]"sv)
                 << "CommandLineOptions::Parse() : Command line parsing OK ! found {"sv
-                << "IsOfflineSimulation = "sv << (this->isOfflineSimulation() ? "true"sv : "false"sv) << ", "
+                << "IsDebugSimulation = "sv << (this->isDebugSimulation() ? "true"sv : "false"sv) << ", "
                 << "FSDIPlatformIndex = "sv << this->getFSDIPlatformIndex() << ", "
                 << "FSDIPlatformCount = "sv << this->getFSDIPlatformCount() << ", "
                 << "FSDIPlatformIP = "sv << this->getFSDIPlatformIP() << ", "

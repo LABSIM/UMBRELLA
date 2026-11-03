@@ -30,7 +30,6 @@
 #include <cmath>
 #include <cstdint>
 #include <cstring>
-#include <ctime>
 #include <dlfcn.h>
 #include <exception>
 #include <format>
@@ -38,7 +37,6 @@
 #include <numbers>
 #include <string_view>
 #include <thread>
-#include <unistd.h>
 #include <vector>
 
 #include "ForceSeatDI.h"
@@ -215,7 +213,7 @@ namespace Labsim::project::umbrella
             << "MotionPlatformManager::Connect(): entry"sv;
 
         // local vars
-        static bool                      setting_is_offline;
+        static bool                      setting_is_debug;
         static uint32_t                  setting_index;
         static uint32_t                  setting_count;
         static std::string               setting_ip;
@@ -226,7 +224,7 @@ namespace Labsim::project::umbrella
 
             auto handle = ApplicationManager::get();
 
-            setting_is_offline    = handle->getOptions().isOfflineSimulation();
+            setting_is_debug      = handle->getOptions().isDebugSimulation();
             setting_index         = handle->getOptions().getFSDIPlatformIndex();
             setting_count         = handle->getOptions().getFSDIPlatformCount();
             setting_ip            = handle->getOptions().getFSDIPlatformIP();
@@ -236,7 +234,7 @@ namespace Labsim::project::umbrella
         } /* release */
 
         // check if offline sim is true
-        if(setting_is_offline)
+        if(setting_is_debug)
         {
             // log
             LogInfo("[Umbrella]"sv)
@@ -428,38 +426,67 @@ namespace Labsim::project::umbrella
             << "MotionPlatformManager::BuildUpstream(): entry"sv;
 
         // invariant
-        static constexpr auto const _mm_to_m_factor = 1000.0;
-        static constexpr auto const _one_constant   = 1.0;
-        static constexpr auto const _two_constant   = 2.0;
+        // static constexpr auto const _mm_to_m_factor = 1000.0;
+        static constexpr auto const _one_constant = 1.0;
+        static constexpr auto const _two_constant = 2.0;
 
         // local vars
-        static bool   bHasInit = false;
+        static bool   bSkip = false;
         static double setting_amplitude;
         static double setting_frequency;
         static double setting_y_axis_phase_offset;
         static double setting_z_axis_phase_offset;
 
-        if(!bHasInit)
+        if(!this->HasUpstreamBeenInitialized())
         {
             // get a handle
             auto handle = ApplicationManager::get();
 
             // extract settings
-            if(handle->getOptions().getStimMode() == CommandLineOptions::stim_mode::S1_)
+            if(handle->getOptions().getStimMode() == CommandLineOptions::stim_mode::S0_)
             {
+                // none, do not perform any calculation...
+                LogDebug("[Umbrella]"sv)
+                    << "MotionPlatformManager::BuildUpstream(): Stim 0 required (control), will skip calculation"sv;
+
+                // skip !
+                bSkip = true;
+            }
+            else if(handle->getOptions().getStimMode() == CommandLineOptions::stim_mode::S1_)
+            {
+                // log
+                LogDebug("[Umbrella]"sv)
+                    << "MotionPlatformManager::BuildUpstream(): Stim 1 required (weak)"sv;
+
                 setting_amplitude = handle->getOptions().getStim1Amplitude();
                 setting_frequency = handle->getOptions().getStim1Frequency();
+                bSkip             = false;
             }
             else
             {
+                // log
+                LogDebug("[Umbrella]"sv)
+                    << "MotionPlatformManager::BuildUpstream(): Stim 2 required (strong)"sv;
+
                 setting_amplitude = handle->getOptions().getStim2Amplitude();
                 setting_frequency = handle->getOptions().getStim2Frequency();
+                bSkip             = false;
             }
+
+            // offset are global settings
             setting_y_axis_phase_offset = handle->getOptions().getYAxisPhaseOffset();
             setting_z_axis_phase_offset = handle->getOptions().getZAxisPhaseOffset();
 
             // set
-            bHasInit = true;
+            this->MarkUpstreamAsInitialized();
+
+        } /* if() */
+
+        // check skipping calculus
+        if(bSkip)
+        {
+            // simply skip all
+            return true;
 
         } /* if() */
 
@@ -585,13 +612,13 @@ namespace Labsim::project::umbrella
             << "MotionPlatformManager::SendUpstream(): entry"sv;
 
         // setting
-        static auto const _setting_is_offline
-            = ApplicationManager::get()->getOptions().isOfflineSimulation();
+        static auto const _setting_is_debug
+            = ApplicationManager::get()->getOptions().isDebugSimulation();
         static auto const _setting_index
             = ApplicationManager::get()->getOptions().getFSDIPlatformIndex();
 
         // check
-        if(!_setting_is_offline)
+        if(!_setting_is_debug)
         {
             // send requested datas !
             send(
@@ -630,13 +657,13 @@ namespace Labsim::project::umbrella
             << "MotionPlatformManager::ReadDownstream(): entry"sv;
 
         // setting
-        static auto const _setting_is_offline
-            = ApplicationManager::get()->getOptions().isOfflineSimulation();
+        static auto const _setting_is_debug
+            = ApplicationManager::get()->getOptions().isDebugSimulation();
         static auto const _setting_index
             = ApplicationManager::get()->getOptions().getFSDIPlatformIndex();
 
         // check
-        if(!_setting_is_offline)
+        if(!_setting_is_debug)
         {
             // Read current actuators position
 
@@ -702,7 +729,7 @@ namespace Labsim::project::umbrella
             = "umbrella_"s + std::format("{0:%T}", std::chrono::high_resolution_clock::now()) + ".csv"s;
         static auto output_file
             = std::ofstream{path.data(), std::ios_base::out | std::ios_base::app}
-              << "timestamp,requestedPosition.sway,requestedPosition.heave,requestedPosition.surge,actualPosition.sway,actualPosition.heave,actualPosition.surge\n"sv;
+              << "timestamp,stim_mode,requestedPosition.sway,requestedPosition.heave,requestedPosition.surge,actualPosition.sway,actualPosition.heave,actualPosition.surge\n"sv;
 
         output_file
             << std::chrono::high_resolution_clock::now()

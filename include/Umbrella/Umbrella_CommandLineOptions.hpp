@@ -64,15 +64,17 @@ namespace Labsim::project::umbrella
 
         static constexpr auto const _s_default_fsdi_platform_index = 0_UI32;
         static constexpr auto const _s_default_fsdi_platform_count = 1_UI32;
-        static constexpr auto const _s_default_fsdi_platform_ip    = "10.1.1.75"sv;
+        static constexpr auto const _s_default_fsdi_platform_ip    = "193.0.208.12"sv;
         static constexpr auto const _s_default_fsdi_platform_sn    = L"250031-000457-315839-323120"sv;
 
         // Stimulation default invariant
 
         enum stim_mode
         {
-            S1_ = 1,
-            S2_
+            S0_ = 0,
+            S1_,
+            S2_,
+            IDLE_
         };
 
         friend auto
@@ -148,10 +150,10 @@ namespace Labsim::project::umbrella
         // getter
 
         [[nodiscard]] constexpr auto
-        isOfflineSimulation() const
+        isDebugSimulation() const
             -> decltype(auto)
         {
-            return this->m_bOfflineSimulation;
+            return this->m_bDebugSimulation;
         };
 
         [[nodiscard]] constexpr auto
@@ -249,7 +251,7 @@ namespace Labsim::project::umbrella
 
         // members
 
-        bool                      m_bOfflineSimulation{};
+        bool                      m_bDebugSimulation{};
         uint32_t                  m_FSDIPlatformIndex{};
         uint32_t                  m_FSDIPlatformCount{};
         std::string               m_FSDIPlatformIP;

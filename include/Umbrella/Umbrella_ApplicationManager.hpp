@@ -26,6 +26,7 @@
 
 #include <Ouranos/pattern/Ouranos_Singleton_pattern.hpp>
 
+#include <atomic>
 #include <vector>
 
 // avoid namespace pollution
@@ -111,8 +112,24 @@ namespace Labsim::project::umbrella
             return this->m_argv;
         };
 
+        // closure
+
+        [[nodiscard]] constexpr auto
+        HasGeneralClosureBeenRequested() const
+            -> bool
+        {
+            return this->m_bEnd;
+        }
+
+        constexpr void
+        MarkGeneralClosureAsRequested()
+        {
+            this->m_bEnd = true;
+        }
+
         // members
 
+        std::atomic< bool >        m_bEnd{false};
         std::size_t                m_argc{0UZ};
         std::vector< std::string > m_argv;
         CommandLineOptions         m_options;

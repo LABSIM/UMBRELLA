@@ -24,6 +24,7 @@
 
 #include <boost/exception/diagnostic_information.hpp>
 
+#include <csignal>
 #include <exception>
 #include <random>
 #include <ranges>
@@ -97,6 +98,15 @@ namespace Labsim::project::umbrella
                 return status;
 
             } /* if() */
+
+            // tail SIGINT
+            (void)std::signal(
+                SIGINT,
+                []([[maybe_unused]] int signum)
+                {
+                    ApplicationManager::get()->MarkGeneralClosureAsRequested();
+                }
+            );
 
             // configure APIs structs
             if(!MotionPlatformManager::get()->Configure())
@@ -196,8 +206,8 @@ namespace Labsim::project::umbrella
         // encapsulate
         try
         {
-            // infinite stim loop
-            while(true)
+            // infinite stim loop until ctr-c signal
+            while(!this->HasGeneralClosureBeenRequested())
             {
                 // update ticking
                 ticking_loop_start       = std::chrono::high_resolution_clock::now();
@@ -218,7 +228,7 @@ namespace Labsim::project::umbrella
 
                 } /* if() */
 
-                // unpdate end timings
+                // update end timings
                 ticking_loop_end     = std::chrono::high_resolution_clock::now();
                 ticking_loop_elapsed = (ticking_loop_end - ticking_loop_start);
 
