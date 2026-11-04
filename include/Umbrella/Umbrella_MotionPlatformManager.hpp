@@ -21,20 +21,20 @@
 #define INCLUDE_UMBRELLA_UMBRELLA_MOTIONPLATFORMMANAGER_HPP_
 
 #include <Umbrella/Umbrella_API.hpp>
-#include <Umbrella/Umbrella_Common.hpp>
 
 #include <Ouranos/pattern/Ouranos_Singleton_pattern.hpp>
 
-#include <atomic>
-#include <vector>
-
-#include "ForceSeatDI.h"
+#include <memory>
 
 using namespace std::literals::string_view_literals;
 
 // avoid namespace pollution
 namespace Labsim::project::umbrella
 {
+
+    // forward decl.
+    class AbstractMotionPlatformProcessor;
+    struct MotionPlatformInfo;
 
     class UMBRELLA_LIB_API MotionPlatformManager final
         : public titans::ouranos::pattern::Singleton< MotionPlatformManager >
@@ -90,60 +90,27 @@ namespace Labsim::project::umbrella
         Cleanup()
             -> bool;
 
+        void
+        EnableStim0Processor();
+
+        void
+        EnableStim1Processor();
+
+        void
+        EnableStim2Processor();
+
+        void
+        DisableAnyProcessor();
+
     private:
 
-        //  internal in processing loop methods
+        // the motion platform info
 
-        auto
-        ResetUpstream()
-            -> bool;
+        std::shared_ptr< MotionPlatformInfo > m_pPlatform{nullptr};
 
-        auto
-        BuildUpstream(double const & _elapsed_tick_count)
-            -> bool;
+        // the current platform processor
 
-        auto
-        SendUpstream()
-            -> bool;
-
-        auto
-        ReadDownstream()
-            -> bool;
-
-        auto
-        ProcessDownstream() const
-            -> bool;
-
-        [[nodiscard]] constexpr auto
-        HasUpstreamBeenInitialized() const
-            -> bool
-        {
-            return this->m_bUptreamInitialized;
-        }
-
-        constexpr void
-        MarkUpstreamAsInitialized()
-        {
-            this->m_bUptreamInitialized = true;
-        }
-
-        constexpr void
-        ResetUpstreamInitialization()
-        {
-            this->m_bUptreamInitialized = false;
-        }
-
-        // members
-        
-        std::atomic< bool >                 m_bUptreamInitialized{false};
-
-        // the ForceSetDI motion platform API members
-
-        std::vector< FSDI_Handle >          m_fsdi_apis{};
-        FSDI_TopTablePositionPhysical       m_fsdi_requestedPosition{};
-        FSDI_ActualActuatorsPositionLogical m_fsdi_actualPosition{};
-        FSDI_ActualTopTablePositionPhysical m_fsdi_actualTopTablePosition{};
-        FSDI_PlatformInfo                   m_fsdi_actualPlatformInfo{};
+        std::shared_ptr< AbstractMotionPlatformProcessor > m_pProcessor{nullptr};
 
     }; /* class MotionPlatformManager */
 

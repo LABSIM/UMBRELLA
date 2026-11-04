@@ -195,6 +195,7 @@ namespace Labsim::project::umbrella
 
         // settings
         static auto const setting_loop_period = this->getOptions().getTargetLoopPeriod();
+        static auto const setting_stim_mode   = this->getOptions().getStimMode();
 
         // ticking mechanism
         static auto const ticking_platform_start   = std::chrono::high_resolution_clock::now();
@@ -203,9 +204,68 @@ namespace Labsim::project::umbrella
         static auto       ticking_loop_end         = std::chrono::high_resolution_clock::now();
         static auto       ticking_loop_elapsed     = std::chrono::duration< double, std::milli >{ticking_loop_end - ticking_loop_start};
 
+        // local
+        static auto bOnline{false};
+
         // encapsulate
         try
         {
+            // prepare processor
+            switch(setting_stim_mode)
+            {
+                case CommandLineOptions::S0_:
+                {
+                    // log
+                    Labsim::LogInfo("[Umbrella]"sv)
+                        << "ApplicationManager::Run() : will force offline Stim0 processing"sv;
+
+                    // continuous processing
+                    MotionPlatformManager::get()->EnableStim0Processor();
+
+                    break;
+                } /* case CommandLineOptions::S0_ */
+
+                case CommandLineOptions::S1_:
+                {
+                    // log
+                    Labsim::LogInfo("[Umbrella]"sv)
+                        << "ApplicationManager::Run() : will force offline Stim1 processing"sv;
+
+                    // continuous processing
+                    MotionPlatformManager::get()->EnableStim1Processor();
+
+                    break;
+                } /* case CommandLineOptions::S1_ */
+
+                case CommandLineOptions::S2_:
+                {
+                    // log
+                    Labsim::LogInfo("[Umbrella]"sv)
+                        << "ApplicationManager::Run() : will force offline Stim2 processing"sv;
+
+                    // continuous processing
+                    MotionPlatformManager::get()->EnableStim2Processor();
+
+                    break;
+                } /* case CommandLineOptions::S2_ */
+
+                case CommandLineOptions::ONLINE_:
+                default:
+                {
+                    // debug
+                    Labsim::LogDebug("[Umbrella]"sv)
+                        << "ApplicationManager::Run() : will listen to online command before processing, going idle"sv;
+
+                    // online processing
+                    MotionPlatformManager::get()->DisableAnyProcessor();
+                    bOnline = true;
+
+                    break;
+
+                } /* case CommandLineOptions::ONLINE_ | default */
+
+            } /* switch() */
+
             // infinite stim loop until ctr-c signal
             while(!this->HasGeneralClosureBeenRequested())
             {

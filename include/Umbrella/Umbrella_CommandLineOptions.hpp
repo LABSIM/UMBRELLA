@@ -71,10 +71,10 @@ namespace Labsim::project::umbrella
 
         enum stim_mode
         {
-            S0_ = 0,
+            ONLINE_ = 0,
+            S0_,
             S1_,
-            S2_,
-            IDLE_
+            S2_
         };
 
         friend auto
@@ -83,7 +83,7 @@ namespace Labsim::project::umbrella
             stim_mode &    mode
         ) -> std::istream &;
 
-        static constexpr auto const _s_default_stim_mode = stim_mode::S1_;
+        static constexpr auto const _s_default_stim_mode = stim_mode::ONLINE_;
 
         //
         // case 1

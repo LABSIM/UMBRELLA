@@ -48,7 +48,11 @@ namespace Labsim::project::umbrella
 
         boost::to_upper(token);
 
-        if(token == "S0" || token == "STIM0" || token == "0")
+        if(token == "ONLINE")
+        {
+            mode = CommandLineOptions::stim_mode::ONLINE_;
+        }
+        else if(token == "S0" || token == "STIM0" || token == "0")
         {
             mode = CommandLineOptions::stim_mode::S0_;
         }
@@ -155,8 +159,8 @@ namespace Labsim::project::umbrella
                 )
                 (
                     "stim-mode",
-                    po::value< self_type::stim_mode >(&this->m_stimMode)->default_value(self_type::_s_default_stim_mode),
-                    "The active stim mode to use : either [stim0(none)], [stim1(weak)] or [stim2(strong)]"
+                    po::value< self_type::stim_mode >(&this->m_stimMode)->implicit_value(self_type::_s_default_stim_mode),
+                    "The actual mode to process, default to online should listen on the network. Any of the actual value : {stim0[=none]}, {stim1[=weak]} or {stim2[=strong]} will override & continuously run until ctrl-c is pressed"
                 )
                 (
                     "stim1-frequency",

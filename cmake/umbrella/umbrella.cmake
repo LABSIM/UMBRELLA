@@ -110,6 +110,7 @@ target_sources(
             $<INSTALL_INTERFACE:include>
         FILES
             ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_API.hpp
+            ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_MotionPlatformInfo.hpp
     PUBLIC
         FILE_SET
             public_header
@@ -124,12 +125,22 @@ target_sources(
             ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_ApplicationManager.hpp
             ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_MotionPlatformManager.hpp
             ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_CommandLineOptions.hpp
+            ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_AbstractMotionPlatformProcessor.hpp
+            ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_IdleMotionPlatformProcessor.hpp
+            ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_Stim0MotionPlatformProcessor.hpp
+            ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_Stim1MotionPlatformProcessor.hpp
+            ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_Stim2MotionPlatformProcessor.hpp
     PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}/ForceSeatDI_Loader.c
         ${UMBRELLA_ROOT}/src/lib/Umbrella.cpp
         ${UMBRELLA_ROOT}/src/lib/Umbrella_ApplicationManager.cpp
         ${UMBRELLA_ROOT}/src/lib/Umbrella_MotionPlatformManager.cpp
         ${UMBRELLA_ROOT}/src/lib/Umbrella_CommandLineOptions.cpp
+        ${UMBRELLA_ROOT}/src/lib/Umbrella_AbstractMotionPlatformProcessor.cpp
+        ${UMBRELLA_ROOT}/src/lib/Umbrella_IdleMotionPlatformProcessor.cpp
+        ${UMBRELLA_ROOT}/src/lib/Umbrella_Stim0MotionPlatformProcessor.cpp
+        ${UMBRELLA_ROOT}/src/lib/Umbrella_Stim1MotionPlatformProcessor.cpp
+        ${UMBRELLA_ROOT}/src/lib/Umbrella_Stim2MotionPlatformProcessor.cpp
 )
 target_compile_definitions(
     Umbrella

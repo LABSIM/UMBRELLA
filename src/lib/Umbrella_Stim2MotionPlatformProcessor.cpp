@@ -1,0 +1,405 @@
+//
+// UMBRELLA : Acronyme AH ?
+// Copyright (C) 2026-present Nawfel KINANI
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; see the file COPYING.
+// If not, see <http://www.gnu.org/licenses/>.
+//
+
+#include <Umbrella/Umbrella_ApplicationManager.hpp>
+#include <Umbrella/Umbrella_MotionPlatformInfo.hpp>
+#include <Umbrella/Umbrella_Stim2MotionPlatformProcessor.hpp>
+
+#include <Ouranos/log/Ouranos_Logger_log.hpp>
+
+#include <boost/exception/all.hpp>
+#include <boost/numeric/conversion/cast.hpp>
+
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <exception>
+#include <format>
+#include <fstream>
+#include <numbers>
+#include <string_view>
+#include <thread>
+#include <vector>
+
+#include "ForceSeatDI.h"
+
+using namespace std::literals::string_view_literals;
+using namespace std::literals::string_literals;
+using namespace std::literals::chrono_literals;
+
+// avoid namespace pollution
+namespace Labsim::project::umbrella
+{
+
+    auto
+    Stim2MotionPlatformProcessor::doResetUpstream(
+        MotionPlatformInfo & platform
+    )
+        -> bool
+    {
+        // log
+        LogDebug("[Umbrella]"sv)
+            << "Stim2MotionPlatformProcessor::doResetUpstream(): entry"sv;
+
+        // reset requested
+        platform.m_fsdi_requestedPosition.yaw
+            = platform.m_fsdi_requestedPosition.pitch
+            = platform.m_fsdi_requestedPosition.roll
+            = platform.m_fsdi_requestedPosition.heave
+            = platform.m_fsdi_requestedPosition.sway
+            = platform.m_fsdi_requestedPosition.surge
+            = 0.0F;
+
+        // log
+        LogDebug("[Umbrella]"sv)
+            << "Stim2MotionPlatformProcessor::doResetUpstream(): exit"sv;
+
+        // if this point is reached, then success
+        return true;
+
+    } /* ResetUpstream() */
+
+    auto
+    Stim2MotionPlatformProcessor::doBuildUpstream(
+        MotionPlatformInfo & platform,
+        double const &       _elapsed_tick_count
+    )
+        -> bool
+    {
+        // log
+        LogDebug("[Umbrella]"sv)
+            << "Stim2MotionPlatformProcessor::doBuildUpstream(): entry"sv;
+
+        // invariant
+        static constexpr auto const _one_constant = 1.0;
+        static constexpr auto const _two_constant = 2.0;
+
+        // local vars
+        static bool   bInit = false;
+        static double setting_amplitude;
+        static double setting_frequency;
+        static double setting_y_axis_phase_offset;
+        static double setting_z_axis_phase_offset;
+
+        if(!bInit)
+        {
+            // get a handle
+            auto handle = ApplicationManager::get();
+
+            // extract settings
+            setting_amplitude           = handle->getOptions().getStim2Amplitude();
+            setting_frequency           = handle->getOptions().getStim2Frequency();
+            setting_y_axis_phase_offset = handle->getOptions().getYAxisPhaseOffset();
+            setting_z_axis_phase_offset = handle->getOptions().getZAxisPhaseOffset();
+
+            // set
+            bInit = true;
+
+        } /* if() */
+
+        // encapsulate all calculus
+        try
+        {
+            //
+            // Sway
+            // x(t) = Ax * sin((2*pi*t) / T)
+            //
+            platform.m_fsdi_requestedPosition.sway
+                = boost::numeric_cast< FSDI_FLOAT >(
+                    setting_amplitude
+                    * std::sin(
+                        (_two_constant * std::numbers::pi * _elapsed_tick_count)
+                        / (_one_constant / setting_frequency)
+                    )
+                );
+
+            //
+            // Heave
+            // y(t) = Ay * sin( ((2*pi*t) / T) + ( (pi/2) * sin((2*pi*t) / T(y)) ) )
+            //
+            platform.m_fsdi_requestedPosition.heave
+                = boost::numeric_cast< FSDI_FLOAT >(
+                    setting_amplitude
+                    * std::sin(
+                        (
+                            (_two_constant * std::numbers::pi * _elapsed_tick_count)
+                            / (_one_constant / setting_frequency)
+                        )
+                        + ((std::numbers::pi / _two_constant)
+                           * ((_two_constant * std::numbers::pi * _elapsed_tick_count)
+                              / ((_one_constant / setting_frequency)
+                                 * setting_y_axis_phase_offset
+                              )
+                           )
+                        )
+                    )
+                );
+
+            //
+            // Surge
+            // z(t) = Az * sin( ((2*pi*t) / T) + ( (pi/2) * sin((2*pi*t) / T(z)) ) )
+            //
+            platform.m_fsdi_requestedPosition.surge
+                = boost::numeric_cast< FSDI_FLOAT >(
+                    setting_amplitude
+                    * std::sin(
+                        (
+                            (_two_constant * std::numbers::pi * _elapsed_tick_count)
+                            / (_one_constant / setting_frequency)
+                        )
+                        + ((std::numbers::pi / _two_constant)
+                           * ((_two_constant * std::numbers::pi * _elapsed_tick_count)
+                              / ((_one_constant / setting_frequency)
+                                 * setting_z_axis_phase_offset
+                              )
+                           )
+                        )
+                    )
+                );
+        }
+        catch(boost::numeric::negative_overflow const & _exception)
+        {
+            // log
+            LogWarn("[Umbrella]"sv)
+                << "Stim2MotionPlatformProcessor::doBuildUpstream() => caught boost::numeric::negative_overflow : "sv
+                << _exception.what();
+        }
+        catch(boost::numeric::positive_overflow const & _exception)
+        {
+            // log
+            LogWarn("[Umbrella]"sv)
+                << "Stim2MotionPlatformProcessor::doBuildUpstream() => caught boost::numeric::positive_overflow : "sv
+                << _exception.what();
+        }
+        catch(boost::numeric::bad_numeric_cast const & _exception)
+        {
+            // log
+            LogWarn("[Umbrella]"sv)
+                << "Stim2MotionPlatformProcessor::doBuildUpstream() => caught boost::numeric::bad_numeric_cast : "sv
+                << _exception.what();
+        }
+        catch(boost::exception const & _exception)
+        {
+            // log
+            LogWarn("[Umbrella]"sv)
+                << "Stim2MotionPlatformProcessor::doBuildUpstream() => caught boost::exception : "sv
+                << boost::diagnostic_information(_exception);
+        }
+        catch(std::exception const & _exception)
+        {
+            // log
+            LogWarn("[Umbrella]"sv)
+                << "Stim2MotionPlatformProcessor::doBuildUpstream() => caught caught std::exception : "sv
+                << _exception.what();
+        }
+        catch(...)
+        {
+            // log
+            LogWarn("[Umbrella]"sv)
+                << "Stim2MotionPlatformProcessor::doBuildUpstream() => caught caught unhandled exception : "sv
+                << boost::current_exception_diagnostic_information();
+
+        } /* try() */
+
+        // log
+        LogDebug("[Umbrella]"sv)
+            << "Stim2MotionPlatformProcessor::doBuildUpstream(): exit"sv;
+
+        // if this point is reached, then success
+        return true;
+
+    } /* BuildUpstream() */
+
+    auto
+    Stim2MotionPlatformProcessor::doSendUpstream(
+        MotionPlatformInfo & platform
+    )
+        -> bool
+    {
+        // log
+        LogDebug("[Umbrella]"sv)
+            << "Stim2MotionPlatformProcessor::doSendUpstream(): entry"sv;
+
+        // setting
+        static auto const _setting_is_debug
+            = ApplicationManager::get()->getOptions().isDebugSimulation();
+        static auto const _setting_index
+            = ApplicationManager::get()->getOptions().getFSDIPlatformIndex();
+
+        // check
+        if(!_setting_is_debug)
+        {
+            // send requested datas !
+            if(ForceSeatDI_SendTopTablePosPhy(
+                   platform.m_fsdi_apis[_setting_index],
+                   &platform.m_fsdi_requestedPosition
+               )
+               != FSDI_True)
+            {
+                // failed...
+                LogError("[Umbrella]"sv)
+                    << "Stim2MotionPlatformProcessor::doSendUpstream(): failed to send request to platform [id:"sv
+                    << (_setting_index + 1)
+                    << "]"sv;
+
+            } /* if() */
+        }
+        else
+        {
+            // log
+            LogInfo("[Umbrella]"sv)
+                << "Stim2MotionPlatformProcessor::doSendUpstream(): API send("sv
+                << "heave:"sv << platform.m_fsdi_requestedPosition.heave
+                << "/sway:"sv << platform.m_fsdi_requestedPosition.sway
+                << "/surge:"sv << platform.m_fsdi_requestedPosition.surge
+                << ")";
+
+        } /* if() */
+
+        // log
+        LogDebug("[Umbrella]"sv)
+            << "Stim2MotionPlatformProcessor::doSendUpstream(): exit"sv;
+
+        // if this point is reached, then success
+        return true;
+
+    } /* SendUpstream() */
+
+    auto
+    Stim2MotionPlatformProcessor::doReadDownstream(
+        MotionPlatformInfo & platform
+    )
+        -> bool
+    {
+        // log
+        LogDebug("[Umbrella]"sv)
+            << "Stim2MotionPlatformProcessor::doReadDownstream(): entry"sv;
+
+        // setting
+        static auto const _setting_is_debug
+            = ApplicationManager::get()->getOptions().isDebugSimulation();
+        static auto const _setting_index
+            = ApplicationManager::get()->getOptions().getFSDIPlatformIndex();
+
+        // check
+        if(!_setting_is_debug)
+        {
+            // Read current actuators position
+
+            if(ForceSeatDI_GetActuatorsPosLog(
+                   platform.m_fsdi_apis.at(_setting_index),
+                   &platform.m_fsdi_actualPosition
+               )
+               != FSDI_True)
+            {
+                // failed...
+                LogError("[Umbrella]"sv)
+                    << "Stim2MotionPlatformProcessor::doReadDownstream(): Failed to get actuator pos"sv;
+
+            } /* if() */
+
+            if(ForceSeatDI_GetTopTablePosPhy(
+                   platform.m_fsdi_apis.at(_setting_index),
+                   &platform.m_fsdi_actualTopTablePosition
+               )
+               != FSDI_True)
+            {
+                // failed...
+                LogError("[Umbrella]"sv)
+                    << "Stim2MotionPlatformProcessor::doReadDownstream(): Failed to get top table pos"sv;
+
+            } /* if() */
+
+            if(ForceSeatDI_GetPlatformInfo(
+                   platform.m_fsdi_apis.at(_setting_index),
+                   &platform.m_fsdi_actualPlatformInfo
+               )
+               != FSDI_True)
+            {
+                // failed...
+                LogError("[Umbrella]"sv)
+                    << "Stim2MotionPlatformProcessor::doReadDownstream(): Failed to get platform info with [ErrorCode:"sv
+                    << ForceSeatDI_GetRecentErrorCode(platform.m_fsdi_apis.at(_setting_index))
+                    << "]"sv;
+
+            } /* if() */
+
+        } /* if() */
+
+        // log
+        LogDebug("[Umbrella]"sv)
+            << "Stim2MotionPlatformProcessor::doReadDownstream(): exit"sv;
+
+        // if this point is reached, then success
+        return true;
+
+    } /* ReadDownstream() */
+
+    auto
+    Stim2MotionPlatformProcessor::doProcessDownstream(
+        MotionPlatformInfo & platform
+    ) const
+        -> bool
+    {
+        // log
+        LogDebug("[Umbrella]"sv)
+            << "Stim2MotionPlatformProcessor::doProcessDownstream(): entry"sv;
+
+        // log to file
+        static auto const path
+            = "umbrella_idle_"s + std::format("{0:%T}", std::chrono::high_resolution_clock::now()) + ".csv"s;
+        static auto output_file
+            = std::ofstream{path.data(), std::ios_base::out | std::ios_base::app}
+              << "timestamp,requestedPosition.sway,requestedPosition.heave,requestedPosition.surge,actualPosition.sway,actualPosition.heave,actualPosition.surge\n"sv;
+
+        output_file
+            << std::chrono::high_resolution_clock::now()
+            << ","sv
+            << platform.m_fsdi_requestedPosition.sway
+            << ","sv
+            << platform.m_fsdi_requestedPosition.heave
+            << ","sv
+            << platform.m_fsdi_requestedPosition.surge
+            << ","sv
+            << platform.m_fsdi_actualTopTablePosition.sway
+            << ","sv
+            << platform.m_fsdi_actualTopTablePosition.heave
+            << ","sv
+            << platform.m_fsdi_actualTopTablePosition.surge
+            << "\n";
+
+        // // NOTE: Displaying data is slow
+        // for(uint32_t i = 0; i < NumberOfPlatforms; ++i)
+        // {
+        //     printf("Platform: %u, Pos: %u, %u, %u, %u, %u, %u\n", (i + 1), actualPositions[i].actualMotorPosition[0], actualPositions[i].actualMotorPosition[1], actualPositions[i].actualMotorPosition[2], actualPositions[i].actualMotorPosition[3], actualPositions[i].actualMotorPosition[4], actualPositions[i].actualMotorPosition[5]);
+        //     printf("    Error code: %d.%d\n", static_cast< int >(platformInfos[i].moduleErrorCode), static_cast< int >(platformInfos[i].moduleErrorIndex));
+        //     printf("    Top Frame: roll %f, pitch %f, yaw %f, heave %f, surge %f, sway %f\n", topTablePos[i].roll, topTablePos[i].pitch, topTablePos[i].yaw, topTablePos[i].heave, topTablePos[i].surge, topTablePos[i].sway);
+        //     static_assert(FSDI_MotorsCount == 6, "");
+        // }
+
+        // log
+        LogDebug("[Umbrella]"sv)
+            << "Stim2MotionPlatformProcessor::doProcessDownstream(): exit"sv;
+
+        // if this point is reached, then success
+        return true;
+
+    } /* ReadDownstream() */
+
+} // namespace Labsim::project::umbrella

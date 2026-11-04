@@ -18,23 +18,24 @@
 //
 
 #include <Umbrella/Umbrella_ApplicationManager.hpp>
+#include <Umbrella/Umbrella_IdleMotionPlatformProcessor.hpp>
+#include <Umbrella/Umbrella_MotionPlatformInfo.hpp>
 #include <Umbrella/Umbrella_MotionPlatformManager.hpp>
+#include <Umbrella/Umbrella_Stim0MotionPlatformProcessor.hpp>
+#include <Umbrella/Umbrella_Stim1MotionPlatformProcessor.hpp>
+#include <Umbrella/Umbrella_Stim2MotionPlatformProcessor.hpp>
 
 #include <Ouranos/log/Ouranos_Logger_log.hpp>
 
 #include <boost/exception/all.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
-#include <algorithm>
 #include <chrono>
-#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <dlfcn.h>
-#include <exception>
 #include <format>
 #include <fstream>
-#include <numbers>
 #include <string_view>
 #include <thread>
 #include <vector>
@@ -146,19 +147,6 @@ namespace Labsim::project::umbrella
             return checkPlatform(apis, index);
         }
 
-        void
-        send(
-            std::vector< FSDI_Handle > const &    apis,
-            uint32_t                              index,
-            FSDI_TopTablePositionPhysical const & pos
-        )
-        {
-            if(ForceSeatDI_SendTopTablePosPhy(apis[index], &pos) != FSDI_True)
-            {
-                printf("Failed to send request to platform %d\n", (index + 1));
-            }
-        }
-
     } /* anonymous namespace */
 
     // NOLINTEND
@@ -167,6 +155,8 @@ namespace Labsim::project::umbrella
         base_type::_token_type const & _token
     ) noexcept
         : base_type(_token)
+        , m_pPlatform(std::make_shared< MotionPlatformInfo >())
+        , m_pProcessor(std::make_shared< IdleMotionPlatformProcessor >())
     {
     }
 
@@ -179,21 +169,22 @@ namespace Labsim::project::umbrella
             << "MotionPlatformManager::Configure(): entry"sv;
 
         static constexpr auto const _s_default_maxSpeed = 65535_UI16;
+        ;
 
         // upstream
         // allocate & configure FSDI resquested struct
-        memset(&this->m_fsdi_requestedPosition, 0, sizeof(this->m_fsdi_requestedPosition));
-        this->m_fsdi_requestedPosition.structSize          = sizeof(this->m_fsdi_requestedPosition);
-        this->m_fsdi_requestedPosition.maxSpeed            = _s_default_maxSpeed;
-        this->m_fsdi_requestedPosition.pause               = FSDI_False;
-        this->m_fsdi_requestedPosition.strategy            = FSDI_Strategy_BestMatch;
-        this->m_fsdi_requestedPosition.accelerationProfile = FSDI_AP_Rapid;
+        memset(&this->m_pPlatform->m_fsdi_requestedPosition, 0, sizeof(this->m_pPlatform->m_fsdi_requestedPosition));
+        this->m_pPlatform->m_fsdi_requestedPosition.structSize          = sizeof(this->m_pPlatform->m_fsdi_requestedPosition);
+        this->m_pPlatform->m_fsdi_requestedPosition.maxSpeed            = _s_default_maxSpeed;
+        this->m_pPlatform->m_fsdi_requestedPosition.pause               = FSDI_False;
+        this->m_pPlatform->m_fsdi_requestedPosition.strategy            = FSDI_Strategy_BestMatch;
+        this->m_pPlatform->m_fsdi_requestedPosition.accelerationProfile = FSDI_AP_Rapid;
 
         // downstream
         // set sizes
-        this->m_fsdi_actualPosition.structSize         = sizeof(FSDI_ActualActuatorsPositionLogical);
-        this->m_fsdi_actualTopTablePosition.structSize = sizeof(FSDI_ActualTopTablePositionPhysical);
-        this->m_fsdi_actualPlatformInfo.structSize     = sizeof(FSDI_PlatformInfo);
+        this->m_pPlatform->m_fsdi_actualPosition.structSize         = sizeof(FSDI_ActualActuatorsPositionLogical);
+        this->m_pPlatform->m_fsdi_actualTopTablePosition.structSize = sizeof(FSDI_ActualTopTablePositionPhysical);
+        this->m_pPlatform->m_fsdi_actualPlatformInfo.structSize     = sizeof(FSDI_PlatformInfo);
 
         // log
         LogDebug("[Umbrella]"sv)
@@ -246,10 +237,10 @@ namespace Labsim::project::umbrella
         } /* if() */
 
         // try ethernet first
-        if(!connectNET(this->m_fsdi_apis, setting_index, setting_ip.data()))
+        if(!connectNET(this->m_pPlatform->m_fsdi_apis, setting_index, setting_ip.data()))
         {
             // failsafe over USB ?
-            if(!connectUSB(this->m_fsdi_apis, setting_index, setting_sn.data()))
+            if(!connectUSB(this->m_pPlatform->m_fsdi_apis, setting_index, setting_sn.data()))
             {
                 // log
                 LogError("[Umbrella]"sv)
@@ -276,7 +267,7 @@ namespace Labsim::project::umbrella
         std::this_thread::sleep_for(setting_idle_duration);
 
         // should always be 1 !
-        if(this->m_fsdi_apis.size() != setting_count)
+        if(this->m_pPlatform->m_fsdi_apis.size() != setting_count)
         {
             // log
             LogError("[Umbrella]"sv)
@@ -302,62 +293,26 @@ namespace Labsim::project::umbrella
     )
         -> bool
     {
+        // log
+        LogDebug("[Umbrella]"sv)
+            << "MotionPlatformManager::Process(): entry"sv;
+
         // call internal
 
-        if(!this->ResetUpstream())
+        if(!this->m_pProcessor->Execute(*this->m_pPlatform, _elapsed_tick_count))
         {
             // log
             LogError("[Umbrella]"sv)
-                << "MotionPlatformManager::Process(): failed to reset upstream"sv;
+                << "MotionPlatformManager::Process(): failed to execute corresponding processor"sv;
 
             // fail...
             return false;
 
         } /* if() */
 
-        if(!this->BuildUpstream(_elapsed_tick_count))
-        {
-            // log
-            LogError("[Umbrella]"sv)
-                << "MotionPlatformManager::Process(): failed to build upstream"sv;
-
-            // fail...
-            return false;
-
-        } /* if() */
-
-        if(!this->SendUpstream())
-        {
-            // log
-            LogError("[Umbrella]"sv)
-                << "MotionPlatformManager::Process(): failed to send upstream"sv;
-
-            // fail...
-            return false;
-
-        } /* if() */
-
-        if(!this->ReadDownstream())
-        {
-            // log
-            LogError("[Umbrella]"sv)
-                << "MotionPlatformManager::Process(): failed to read downstream"sv;
-
-            // fail...
-            return false;
-
-        } /* if() */
-
-        if(!this->ProcessDownstream())
-        {
-            // log
-            LogError("[Umbrella]"sv)
-                << "MotionPlatformManager::Process(): failed to process downstream"sv;
-
-            // fail...
-            return false;
-
-        } /* if() */
+        // log
+        LogDebug("[Umbrella]"sv)
+            << "MotionPlatformManager::Process(): exit"sv;
 
         // if reached then it's a success
         return true;
@@ -373,7 +328,7 @@ namespace Labsim::project::umbrella
             << "MotionPlatformManager::Cleanup(): entry"sv;
 
         // cleanup
-        for(FSDI_Handle api: this->m_fsdi_apis)
+        for(FSDI_Handle api: this->m_pPlatform->m_fsdi_apis)
         {
             ForceSeatDI_Park(api, FSDI_ParkMode_Normal);
             ForceSeatDI_Delete(api);
@@ -389,380 +344,68 @@ namespace Labsim::project::umbrella
 
     } /* Cleanup() */
 
-    auto
-    MotionPlatformManager::ResetUpstream()
-        -> bool
+    void
+    MotionPlatformManager::EnableStim0Processor()
     {
         // log
         LogDebug("[Umbrella]"sv)
-            << "MotionPlatformManager::ResetUpstream(): entry"sv;
+            << "MotionPlatformManager::EnableStim0Processor(): entry"sv;
 
-        // reset requested
-        this->m_fsdi_requestedPosition.yaw
-            = this->m_fsdi_requestedPosition.pitch
-            = this->m_fsdi_requestedPosition.roll
-            = this->m_fsdi_requestedPosition.heave
-            = this->m_fsdi_requestedPosition.sway
-            = this->m_fsdi_requestedPosition.surge
-            = 0.0F;
+        // allocate
+        this->m_pProcessor = std::make_shared< Stim0MotionPlatformProcessor >();
 
         // log
         LogDebug("[Umbrella]"sv)
-            << "MotionPlatformManager::ResetUpstream(): exit"sv;
+            << "MotionPlatformManager::EnableStim0Processor(): exit"sv;
 
-        // if this point is reached, then success
-        return true;
+    } /* EnableStim0Processor() */
 
-    } /* ResetUpstream() */
-
-    auto
-    MotionPlatformManager::BuildUpstream(
-        double const & _elapsed_tick_count
-    )
-        -> bool
+    void
+    MotionPlatformManager::EnableStim1Processor()
     {
         // log
         LogDebug("[Umbrella]"sv)
-            << "MotionPlatformManager::BuildUpstream(): entry"sv;
+            << "MotionPlatformManager::EnableStim1Processor(): entry"sv;
 
-        // invariant
-        // static constexpr auto const _mm_to_m_factor = 1000.0;
-        static constexpr auto const _one_constant = 1.0;
-        static constexpr auto const _two_constant = 2.0;
-
-        // local vars
-        static bool   bSkip = false;
-        static double setting_amplitude;
-        static double setting_frequency;
-        static double setting_y_axis_phase_offset;
-        static double setting_z_axis_phase_offset;
-
-        if(!this->HasUpstreamBeenInitialized())
-        {
-            // get a handle
-            auto handle = ApplicationManager::get();
-
-            // extract settings
-            if(handle->getOptions().getStimMode() == CommandLineOptions::stim_mode::S0_)
-            {
-                // none, do not perform any calculation...
-                LogDebug("[Umbrella]"sv)
-                    << "MotionPlatformManager::BuildUpstream(): Stim 0 required (control), will skip calculation"sv;
-
-                // skip !
-                bSkip = true;
-            }
-            else if(handle->getOptions().getStimMode() == CommandLineOptions::stim_mode::S1_)
-            {
-                // log
-                LogDebug("[Umbrella]"sv)
-                    << "MotionPlatformManager::BuildUpstream(): Stim 1 required (weak)"sv;
-
-                setting_amplitude = handle->getOptions().getStim1Amplitude();
-                setting_frequency = handle->getOptions().getStim1Frequency();
-                bSkip             = false;
-            }
-            else
-            {
-                // log
-                LogDebug("[Umbrella]"sv)
-                    << "MotionPlatformManager::BuildUpstream(): Stim 2 required (strong)"sv;
-
-                setting_amplitude = handle->getOptions().getStim2Amplitude();
-                setting_frequency = handle->getOptions().getStim2Frequency();
-                bSkip             = false;
-            }
-
-            // offset are global settings
-            setting_y_axis_phase_offset = handle->getOptions().getYAxisPhaseOffset();
-            setting_z_axis_phase_offset = handle->getOptions().getZAxisPhaseOffset();
-
-            // set
-            this->MarkUpstreamAsInitialized();
-
-        } /* if() */
-
-        // check skipping calculus
-        if(bSkip)
-        {
-            // simply skip all
-            return true;
-
-        } /* if() */
-
-        // encapsulate all calculus
-        try
-        {
-            //
-            // Sway
-            // x(t) = Ax * sin((2*pi*t) / T)
-            //
-            this->m_fsdi_requestedPosition.sway
-                = boost::numeric_cast< FSDI_FLOAT >(
-                    setting_amplitude
-                    * std::sin(
-                        (_two_constant * std::numbers::pi * _elapsed_tick_count)
-                        / (_one_constant / setting_frequency)
-                    )
-                );
-
-            //
-            // Heave
-            // y(t) = Ay * sin( ((2*pi*t) / T) + ( (pi/2) * sin((2*pi*t) / T(y)) ) )
-            //
-            this->m_fsdi_requestedPosition.heave
-                = boost::numeric_cast< FSDI_FLOAT >(
-                    setting_amplitude
-                    * std::sin(
-                        (
-                            (_two_constant * std::numbers::pi * _elapsed_tick_count)
-                            / (_one_constant / setting_frequency)
-                        )
-                        + ((std::numbers::pi / _two_constant)
-                           * ((_two_constant * std::numbers::pi * _elapsed_tick_count)
-                              / ((_one_constant / setting_frequency)
-                                 * setting_y_axis_phase_offset
-                              )
-                           )
-                        )
-                    )
-                );
-
-            //
-            // Surge
-            // z(t) = Az * sin( ((2*pi*t) / T) + ( (pi/2) * sin((2*pi*t) / T(z)) ) )
-            //
-            this->m_fsdi_requestedPosition.surge
-                = boost::numeric_cast< FSDI_FLOAT >(
-                    setting_amplitude
-                    * std::sin(
-                        (
-                            (_two_constant * std::numbers::pi * _elapsed_tick_count)
-                            / (_one_constant / setting_frequency)
-                        )
-                        + ((std::numbers::pi / _two_constant)
-                           * ((_two_constant * std::numbers::pi * _elapsed_tick_count)
-                              / ((_one_constant / setting_frequency)
-                                 * setting_z_axis_phase_offset
-                              )
-                           )
-                        )
-                    )
-                );
-        }
-        catch(boost::numeric::negative_overflow const & _exception)
-        {
-            // log
-            LogWarn("[Umbrella]"sv)
-                << "MotionPlatformManager::BuildUpstream() => caught boost::numeric::negative_overflow : "sv
-                << _exception.what();
-        }
-        catch(boost::numeric::positive_overflow const & _exception)
-        {
-            // log
-            LogWarn("[Umbrella]"sv)
-                << "MotionPlatformManager::BuildUpstream() => caught boost::numeric::positive_overflow : "sv
-                << _exception.what();
-        }
-        catch(boost::numeric::bad_numeric_cast const & _exception)
-        {
-            // log
-            LogWarn("[Umbrella]"sv)
-                << "MotionPlatformManager::BuildUpstream() => caught boost::numeric::bad_numeric_cast : "sv
-                << _exception.what();
-        }
-        catch(boost::exception const & _exception)
-        {
-            // log
-            LogWarn("[Umbrella]"sv)
-                << "MotionPlatformManager::BuildUpstream() => caught boost::exception : "sv
-                << boost::diagnostic_information(_exception);
-        }
-        catch(std::exception const & _exception)
-        {
-            // log
-            LogWarn("[Umbrella]"sv)
-                << "MotionPlatformManager::BuildUpstream() => caught caught std::exception : "sv
-                << _exception.what();
-        }
-        catch(...)
-        {
-            // log
-            LogWarn("[Umbrella]"sv)
-                << "MotionPlatformManager::BuildUpstream() => caught caught unhandled exception : "sv
-                << boost::current_exception_diagnostic_information();
-
-        } /* try() */
+        // allocate
+        this->m_pProcessor = std::make_shared< Stim1MotionPlatformProcessor >();
 
         // log
         LogDebug("[Umbrella]"sv)
-            << "MotionPlatformManager::BuildUpstream(): exit"sv;
+            << "MotionPlatformManager::EnableStim1Processor(): exit"sv;
 
-        // if this point is reached, then success
-        return true;
+    } /* EnableStim1Processor() */
 
-    } /* BuildUpstream() */
-
-    auto
-    MotionPlatformManager::SendUpstream()
-        -> bool
+    void
+    MotionPlatformManager::EnableStim2Processor()
     {
         // log
         LogDebug("[Umbrella]"sv)
-            << "MotionPlatformManager::SendUpstream(): entry"sv;
+            << "MotionPlatformManager::EnableStim2Processor(): entry"sv;
 
-        // setting
-        static auto const _setting_is_debug
-            = ApplicationManager::get()->getOptions().isDebugSimulation();
-        static auto const _setting_index
-            = ApplicationManager::get()->getOptions().getFSDIPlatformIndex();
-
-        // check
-        if(!_setting_is_debug)
-        {
-            // send requested datas !
-            send(
-                this->m_fsdi_apis,
-                _setting_index,
-                this->m_fsdi_requestedPosition
-            );
-        }
-        else
-        {
-            // log
-            LogInfo("[Umbrella]"sv)
-                << "MotionPlatformManager::SendUpstream(): API send("sv
-                << "heave:"sv << this->m_fsdi_requestedPosition.heave
-                << "/sway:"sv << this->m_fsdi_requestedPosition.sway
-                << "/surge:"sv << this->m_fsdi_requestedPosition.surge
-                << ")";
-
-        } /* if() */
+        // allocate
+        this->m_pProcessor = std::make_shared< Stim2MotionPlatformProcessor >();
 
         // log
         LogDebug("[Umbrella]"sv)
-            << "MotionPlatformManager::SendUpstream(): exit"sv;
+            << "MotionPlatformManager::EnableStim2Processor(): exit"sv;
 
-        // if this point is reached, then success
-        return true;
+    } /* EnableStim2Processor() */
 
-    } /* SendUpstream() */
-
-    auto
-    MotionPlatformManager::ReadDownstream()
-        -> bool
+    void
+    MotionPlatformManager::DisableAnyProcessor()
     {
         // log
         LogDebug("[Umbrella]"sv)
-            << "MotionPlatformManager::ReadDownstream(): entry"sv;
+            << "MotionPlatformManager::DisableAnyProcessor(): entry"sv;
 
-        // setting
-        static auto const _setting_is_debug
-            = ApplicationManager::get()->getOptions().isDebugSimulation();
-        static auto const _setting_index
-            = ApplicationManager::get()->getOptions().getFSDIPlatformIndex();
-
-        // check
-        if(!_setting_is_debug)
-        {
-            // Read current actuators position
-
-            if(ForceSeatDI_GetActuatorsPosLog(
-                   this->m_fsdi_apis.at(_setting_index),
-                   &this->m_fsdi_actualPosition
-               )
-               != FSDI_True)
-            {
-                // failed...
-                LogError("[Umbrella]"sv)
-                    << "MotionPlatformManager::ReadDownstream(): Failed to get actuator pos"sv;
-
-            } /* if() */
-
-            if(ForceSeatDI_GetTopTablePosPhy(
-                   this->m_fsdi_apis.at(_setting_index),
-                   &this->m_fsdi_actualTopTablePosition
-               )
-               != FSDI_True)
-            {
-                // failed...
-                LogError("[Umbrella]"sv)
-                    << "MotionPlatformManager::ReadDownstream(): Failed to get top table pos"sv;
-
-            } /* if() */
-
-            if(ForceSeatDI_GetPlatformInfo(
-                   this->m_fsdi_apis.at(_setting_index),
-                   &this->m_fsdi_actualPlatformInfo
-               )
-               != FSDI_True)
-            {
-                // failed...
-                LogError("[Umbrella]"sv)
-                    << "MotionPlatformManager::ReadDownstream(): Failed to get platform info with [ErrorCode:"sv
-                    << ForceSeatDI_GetRecentErrorCode(this->m_fsdi_apis.at(_setting_index))
-                    << "]"sv;
-
-            } /* if() */
-
-        } /* if() */
+        // allocate
+        this->m_pProcessor = std::make_shared< IdleMotionPlatformProcessor >();
 
         // log
         LogDebug("[Umbrella]"sv)
-            << "MotionPlatformManager::ReadDownstream(): exit"sv;
+            << "MotionPlatformManager::DisableAnyProcessor(): exit"sv;
 
-        // if this point is reached, then success
-        return true;
-
-    } /* ReadDownstream() */
-
-    auto
-    MotionPlatformManager::ProcessDownstream() const
-        -> bool
-    {
-        // log
-        LogDebug("[Umbrella]"sv)
-            << "MotionPlatformManager::ProcessDownstream(): entry"sv;
-
-        // log to file
-        static auto const path
-            = "umbrella_"s + std::format("{0:%T}", std::chrono::high_resolution_clock::now()) + ".csv"s;
-        static auto output_file
-            = std::ofstream{path.data(), std::ios_base::out | std::ios_base::app}
-              << "timestamp,stim_mode,requestedPosition.sway,requestedPosition.heave,requestedPosition.surge,actualPosition.sway,actualPosition.heave,actualPosition.surge\n"sv;
-
-        output_file
-            << std::chrono::high_resolution_clock::now()
-            << ","sv
-            << this->m_fsdi_requestedPosition.sway
-            << ","sv
-            << this->m_fsdi_requestedPosition.heave
-            << ","sv
-            << this->m_fsdi_requestedPosition.surge
-            << ","sv
-            << this->m_fsdi_actualTopTablePosition.sway
-            << ","sv
-            << this->m_fsdi_actualTopTablePosition.heave
-            << ","sv
-            << this->m_fsdi_actualTopTablePosition.surge
-            << "\n";
-
-        // // NOTE: Displaying data is slow
-        // for(uint32_t i = 0; i < NumberOfPlatforms; ++i)
-        // {
-        //     printf("Platform: %u, Pos: %u, %u, %u, %u, %u, %u\n", (i + 1), actualPositions[i].actualMotorPosition[0], actualPositions[i].actualMotorPosition[1], actualPositions[i].actualMotorPosition[2], actualPositions[i].actualMotorPosition[3], actualPositions[i].actualMotorPosition[4], actualPositions[i].actualMotorPosition[5]);
-        //     printf("    Error code: %d.%d\n", static_cast< int >(platformInfos[i].moduleErrorCode), static_cast< int >(platformInfos[i].moduleErrorIndex));
-        //     printf("    Top Frame: roll %f, pitch %f, yaw %f, heave %f, surge %f, sway %f\n", topTablePos[i].roll, topTablePos[i].pitch, topTablePos[i].yaw, topTablePos[i].heave, topTablePos[i].surge, topTablePos[i].sway);
-        //     static_assert(FSDI_MotorsCount == 6, "");
-        // }
-
-        // log
-        LogDebug("[Umbrella]"sv)
-            << "MotionPlatformManager::ProcessDownstream(): exit"sv;
-
-        // if this point is reached, then success
-        return true;
-
-    } /* ReadDownstream() */
+    } /* EnableStim0Processor() */
 
 } // namespace Labsim::project::umbrella
