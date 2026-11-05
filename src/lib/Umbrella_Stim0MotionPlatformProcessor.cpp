@@ -26,13 +26,10 @@
 #include <boost/exception/all.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
-#include <algorithm>
 #include <chrono>
-#include <cmath>
-#include <exception>
 #include <format>
 #include <fstream>
-#include <numbers>
+#include <regex>
 #include <string_view>
 #include <thread>
 #include <vector>
@@ -224,7 +221,7 @@ namespace Labsim::project::umbrella
 
         // log to file
         static auto const path
-            = "umbrella_stim0_"s + titans::ouranos::Common::GenerateTimestamp() + ".csv"s;
+            = "umbrella_stim0_"s + std::regex_replace(titans::ouranos::Common::GenerateTimestamp(), std::regex{":"}, "-") + ".csv"s;
         static auto output_file
             = std::ofstream{path.data(), std::ios_base::out | std::ios_base::app}
               << "timestamp,requestedPosition.sway,requestedPosition.heave,requestedPosition.surge,actualPosition.sway,actualPosition.heave,actualPosition.surge\n"sv;

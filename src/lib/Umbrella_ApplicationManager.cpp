@@ -219,7 +219,7 @@ namespace Labsim::project::umbrella
                     Labsim::LogInfo("[Umbrella]"sv)
                         << "ApplicationManager::Run() : will force offline Stim0 processing"sv;
 
-                    // continuous processing
+                    // S0 processing
                     MotionPlatformManager::get()->EnableStim0Processor();
 
                     break;
@@ -231,7 +231,7 @@ namespace Labsim::project::umbrella
                     Labsim::LogInfo("[Umbrella]"sv)
                         << "ApplicationManager::Run() : will force offline Stim1 processing"sv;
 
-                    // continuous processing
+                    // S1 processing
                     MotionPlatformManager::get()->EnableStim1Processor();
 
                     break;
@@ -243,7 +243,7 @@ namespace Labsim::project::umbrella
                     Labsim::LogInfo("[Umbrella]"sv)
                         << "ApplicationManager::Run() : will force offline Stim2 processing"sv;
 
-                    // continuous processing
+                    // S2 processing
                     MotionPlatformManager::get()->EnableStim2Processor();
 
                     break;
@@ -272,6 +272,12 @@ namespace Labsim::project::umbrella
                 // update ticking
                 ticking_loop_start       = std::chrono::high_resolution_clock::now();
                 ticking_platform_elapsed = (ticking_loop_start - ticking_platform_start);
+
+                // has pending message ? 
+                if(bOnline)
+                {
+
+                } /**/
 
                 // process motion
                 if(!MotionPlatformManager::get()->Process(ticking_platform_elapsed.count()))
