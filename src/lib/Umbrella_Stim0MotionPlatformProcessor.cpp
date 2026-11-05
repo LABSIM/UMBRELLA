@@ -224,13 +224,13 @@ namespace Labsim::project::umbrella
 
         // log to file
         static auto const path
-            = "umbrella_stim0_"s + std::format("{0:%T}", std::chrono::high_resolution_clock::now()) + ".csv"s;
+            = "umbrella_stim0_"s + titans::ouranos::Common::GenerateTimestamp() + ".csv"s;
         static auto output_file
             = std::ofstream{path.data(), std::ios_base::out | std::ios_base::app}
               << "timestamp,requestedPosition.sway,requestedPosition.heave,requestedPosition.surge,actualPosition.sway,actualPosition.heave,actualPosition.surge\n"sv;
 
         output_file
-            << std::chrono::high_resolution_clock::now()
+            << titans::ouranos::Common::GenerateTimestamp()
             << ","sv
             << platform.m_fsdi_requestedPosition.sway
             << ","sv

@@ -24,74 +24,9 @@
 
 #include <Ouranos/Ouranos_Common.hpp>
 
-#include <map>
-#include <random>
-#include <ranges>
-#include <string>
-#include <string_view>
-
 // avoid namespace pollution
 namespace Labsim::project::umbrella
 {
-
-    // all credit goes to [ https://codereview.stackexchange.com/a/109266 ]
-
-    template<
-        typename T    = std::mt19937,
-        std::size_t N = T::state_size * sizeof(typename T::result_type) >
-    static constexpr auto
-    ProperlySeededRandomEngine()
-        -> T
-    {
-        std::random_device source;
-
-        auto random_data
-            = std::views::iota(std::size_t(), ((N - 1) / sizeof(source())) + 1)
-              | std::views::transform([&](auto)
-                                      {
-                                          return source();
-                                      });
-
-        std::seed_seq seeds(std::begin(random_data), std::end(random_data));
-
-        return T(seeds);
-
-    }; /* ProperlySeededRandomEngine() */
-
-    // enums class
-
-    class UMBRELLA_LIB_API Common
-    {
-    public:
-
-        // using
-
-        using self_type           = Common;
-        using uuid_generator_type = decltype(ProperlySeededRandomEngine());
-        using uuid_type           = decltype(ProperlySeededRandomEngine()());
-
-        // methods
-
-        static constexpr auto
-        GenerateUUID()
-            -> uuid_type;
-
-    private:
-
-        // static const members
-
-        static uuid_generator_type s_uuid_generator;
-
-    }; /* struct Common */
-
-    // impl
-
-    constexpr auto
-    Common::GenerateUUID()
-        -> uuid_type
-    {
-        return self_type::s_uuid_generator();
-    }
 
     // enums class
 

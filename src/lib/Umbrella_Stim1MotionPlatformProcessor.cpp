@@ -362,14 +362,15 @@ namespace Labsim::project::umbrella
             << "Stim1MotionPlatformProcessor::doProcessDownstream(): entry"sv;
 
         // log to file
+        // ISO 8601 format timestamp
         static auto const path
-            = "umbrella_idle_"s + std::format("{0:%T}", std::chrono::high_resolution_clock::now()) + ".csv"s;
+            = "umbrella_stim1_"s + titans::ouranos::Common::GenerateTimestamp() + ".csv"s;
         static auto output_file
             = std::ofstream{path.data(), std::ios_base::out | std::ios_base::app}
               << "timestamp,requestedPosition.sway,requestedPosition.heave,requestedPosition.surge,actualPosition.sway,actualPosition.heave,actualPosition.surge\n"sv;
 
         output_file
-            << std::chrono::high_resolution_clock::now()
+            << titans::ouranos::Common::GenerateTimestamp()
             << ","sv
             << platform.m_fsdi_requestedPosition.sway
             << ","sv
@@ -383,15 +384,6 @@ namespace Labsim::project::umbrella
             << ","sv
             << platform.m_fsdi_actualTopTablePosition.surge
             << "\n";
-
-        // // NOTE: Displaying data is slow
-        // for(uint32_t i = 0; i < NumberOfPlatforms; ++i)
-        // {
-        //     printf("Platform: %u, Pos: %u, %u, %u, %u, %u, %u\n", (i + 1), actualPositions[i].actualMotorPosition[0], actualPositions[i].actualMotorPosition[1], actualPositions[i].actualMotorPosition[2], actualPositions[i].actualMotorPosition[3], actualPositions[i].actualMotorPosition[4], actualPositions[i].actualMotorPosition[5]);
-        //     printf("    Error code: %d.%d\n", static_cast< int >(platformInfos[i].moduleErrorCode), static_cast< int >(platformInfos[i].moduleErrorIndex));
-        //     printf("    Top Frame: roll %f, pitch %f, yaw %f, heave %f, surge %f, sway %f\n", topTablePos[i].roll, topTablePos[i].pitch, topTablePos[i].yaw, topTablePos[i].heave, topTablePos[i].surge, topTablePos[i].sway);
-        //     static_assert(FSDI_MotorsCount == 6, "");
-        // }
 
         // log
         LogDebug("[Umbrella]"sv)
