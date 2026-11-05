@@ -74,7 +74,7 @@ namespace Labsim::project::umbrella
             -> status_code_type;
 
         auto
-        Run() const
+        Run()
             -> status_code_type;
 
         static auto

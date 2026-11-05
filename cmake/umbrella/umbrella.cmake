@@ -124,6 +124,7 @@ target_sources(
             ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_Common.hpp
             ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_ApplicationManager.hpp
             ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_MotionPlatformManager.hpp
+            ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_NetworkManager.hpp
             ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_CommandLineOptions.hpp
             ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_AbstractMotionPlatformProcessor.hpp
             ${UMBRELLA_ROOT}/include/Umbrella/Umbrella_IdleMotionPlatformProcessor.hpp
@@ -135,6 +136,7 @@ target_sources(
         ${UMBRELLA_ROOT}/src/lib/Umbrella.cpp
         ${UMBRELLA_ROOT}/src/lib/Umbrella_ApplicationManager.cpp
         ${UMBRELLA_ROOT}/src/lib/Umbrella_MotionPlatformManager.cpp
+        ${UMBRELLA_ROOT}/src/lib/Umbrella_NetworkManager.cpp
         ${UMBRELLA_ROOT}/src/lib/Umbrella_CommandLineOptions.cpp
         ${UMBRELLA_ROOT}/src/lib/Umbrella_AbstractMotionPlatformProcessor.cpp
         ${UMBRELLA_ROOT}/src/lib/Umbrella_IdleMotionPlatformProcessor.cpp

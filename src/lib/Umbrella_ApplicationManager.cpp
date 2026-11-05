@@ -19,6 +19,7 @@
 
 #include <Umbrella/Umbrella_ApplicationManager.hpp>
 #include <Umbrella/Umbrella_MotionPlatformManager.hpp>
+#include <Umbrella/Umbrella_NetworkManager.hpp>
 
 #include <Ouranos/log/Ouranos_Logger_log.hpp>
 
@@ -26,8 +27,6 @@
 
 #include <csignal>
 #include <exception>
-#include <random>
-#include <ranges>
 #include <span>
 #include <string_view>
 #include <thread>
@@ -183,7 +182,7 @@ namespace Labsim::project::umbrella
     } /* Initialize() */
 
     auto
-    ApplicationManager::Run() const
+    ApplicationManager::Run()
         -> status_code_type
     {
         // debug
@@ -203,9 +202,6 @@ namespace Labsim::project::umbrella
         static auto       ticking_loop_start       = std::chrono::high_resolution_clock::now();
         static auto       ticking_loop_end         = std::chrono::high_resolution_clock::now();
         static auto       ticking_loop_elapsed     = std::chrono::duration< double, std::milli >{ticking_loop_end - ticking_loop_start};
-
-        // local
-        static auto bOnline{false};
 
         // encapsulate
         try
@@ -258,7 +254,6 @@ namespace Labsim::project::umbrella
 
                     // online processing
                     MotionPlatformManager::get()->DisableAnyProcessor();
-                    bOnline = true;
 
                     break;
 
@@ -273,11 +268,105 @@ namespace Labsim::project::umbrella
                 ticking_loop_start       = std::chrono::high_resolution_clock::now();
                 ticking_platform_elapsed = (ticking_loop_start - ticking_platform_start);
 
-                // has pending message ? 
-                if(bOnline)
+                // process network connectivity
+                if(!NetworkManager::get()->Process())
                 {
+                    // debug
+                    Labsim::LogDebug("[Umbrella]"sv)
+                        << "ApplicationManager::Run() : network failed to process..."sv;
 
-                } /**/
+                    // switch status
+                    status = status_code::UMBRELLA_LIB_ERROR_UNKNOWN_;
+
+                    // exit
+                    return status;
+
+                } /* if() */
+
+                // has any pending msg
+                if(NetworkManager::get()->HasPendingData())
+                {
+                    // log
+                    Labsim::LogInfo("[Umbrella]"sv)
+                        << "ApplicationManager::Run() : network has pending data, will proceed."sv;
+
+                    // process only the last(freshiest) one, discard the rest...
+                    switch(NetworkManager::get()->FlushPendingData().top())
+                    {
+                        case UmbrellaNetworkMessageType::BEGIN_STIM_0_:
+                        {
+                            // log
+                            Labsim::LogInfo("[Umbrella]"sv)
+                                << "ApplicationManager::Run() : requesting Stim0 processing"sv;
+
+                            // S0 processing
+                            MotionPlatformManager::get()->EnableStim0Processor();
+                            break;
+                        }
+
+                        case UmbrellaNetworkMessageType::BEGIN_STIM_1_:
+                        {
+                            // log
+                            Labsim::LogInfo("[Umbrella]"sv)
+                                << "ApplicationManager::Run() : requesting Stim1 processing"sv;
+
+                            // S1 processing
+                            MotionPlatformManager::get()->EnableStim1Processor();
+                            break;
+                        }
+
+                        case UmbrellaNetworkMessageType::BEGIN_STIM_2_:
+                        {
+                            // log
+                            Labsim::LogInfo("[Umbrella]"sv)
+                                << "ApplicationManager::Run() : requesting Stim2 processing"sv;
+
+                            // S2 processing
+                            MotionPlatformManager::get()->EnableStim2Processor();
+                            break;
+                        }
+
+                        case UmbrellaNetworkMessageType::STOP_ALL_STIM_:
+                        {
+                            // log
+                            Labsim::LogInfo("[Umbrella]"sv)
+                                << "ApplicationManager::Run() : requesting to stop, going idle"sv;
+
+                            // idle processing
+                            MotionPlatformManager::get()->DisableAnyProcessor();
+                            break;
+                        }
+
+                        case UmbrellaNetworkMessageType::STOP_APP_:
+                        {
+                            // log
+                            Labsim::LogInfo("[Umbrella]"sv)
+                                << "ApplicationManager::Run() : requesting to stop the app !"sv;
+
+                            // idle processing & mark as end
+                            MotionPlatformManager::get()->DisableAnyProcessor();
+                            this->MarkGeneralClosureAsRequested();
+                            break;
+
+                            break;
+                        }
+
+                        case UmbrellaNetworkMessageType::UNDEFINED_:
+                        default:
+                        {
+                            // Error
+                            Labsim::LogError("[Umbrella]"sv)
+                                << "ApplicationManager::Run() : UNDEFINED message... stop the app !"sv;
+
+                            // idle processing & mark as end
+                            MotionPlatformManager::get()->DisableAnyProcessor();
+                            this->MarkGeneralClosureAsRequested();
+                            break;
+                        }
+
+                    } /* switch()  */
+
+                } /* if() */
 
                 // process motion
                 if(!MotionPlatformManager::get()->Process(ticking_platform_elapsed.count()))

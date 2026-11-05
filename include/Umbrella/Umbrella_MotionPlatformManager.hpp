@@ -26,8 +26,6 @@
 
 #include <memory>
 
-using namespace std::literals::string_view_literals;
-
 // avoid namespace pollution
 namespace Labsim::project::umbrella
 {
