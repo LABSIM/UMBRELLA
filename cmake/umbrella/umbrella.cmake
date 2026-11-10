@@ -157,6 +157,7 @@ target_link_libraries(
         Boost::thread
         Boost::filesystem
         Boost::program_options
+        Poco::Net
         dl
         pthread
         Ouranos::log

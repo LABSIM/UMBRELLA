@@ -89,6 +89,7 @@ include(cmake/umbrella/umbrella.cmake)
 
 # bin
 include(cmake/umbrella/umbrella-app.cmake)
+include(cmake/umbrella/umbrella-test.cmake)
 
 # labsim custom targets
 include(cmake/target.cmake)

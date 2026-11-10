@@ -122,12 +122,42 @@ namespace Labsim::project::umbrella
 
             } /* if() */
 
+            // configure the network manager
+            if(!NetworkManager::get()->Configure())
+            {
+                // debug
+                Labsim::LogDebug("[Umbrella]"sv)
+                    << "ApplicationManager::Initialize() : failed to configure the network manager"sv;
+
+                // switch status
+                status = status_code::UMBRELLA_LIB_EXIT_;
+
+                // exit
+                return status;
+
+            } /* if() */
+
             // connect to platform
             if(!MotionPlatformManager::get()->Connect())
             {
                 // debug
                 Labsim::LogDebug("[Umbrella]"sv)
                     << "ApplicationManager::Initialize() : failed to connect to the motion platform"sv;
+
+                // switch status
+                status = status_code::UMBRELLA_LIB_EXIT_;
+
+                // exit
+                return status;
+
+            } /* if() */
+
+            // connect
+            if(!NetworkManager::get()->Connect())
+            {
+                // debug
+                Labsim::LogDebug("[Umbrella]"sv)
+                    << "ApplicationManager::Initialize() : failed to connect the network manager"sv;
 
                 // switch status
                 status = status_code::UMBRELLA_LIB_EXIT_;
@@ -249,7 +279,7 @@ namespace Labsim::project::umbrella
                 default:
                 {
                     // debug
-                    Labsim::LogDebug("[Umbrella]"sv)
+                    Labsim::LogInfo("[Umbrella]"sv)
                         << "ApplicationManager::Run() : will listen to online command before processing, going idle"sv;
 
                     // online processing

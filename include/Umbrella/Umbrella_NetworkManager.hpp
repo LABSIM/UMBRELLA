@@ -26,7 +26,14 @@
 
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <stack>
+
+// forward decl.
+namespace Poco::Net
+{
+    class DatagramSocket;
+} // namespace Poco::Net
 
 // avoid namespace pollution
 namespace Labsim::project::umbrella
@@ -117,7 +124,9 @@ namespace Labsim::project::umbrella
 
         // members
 
-        std::atomic< bool > m_bPendingData{false};
+        std::atomic< bool >                          m_bPendingData{false};
+        std::stack< UmbrellaNetworkMessageType >     m_networkMsg;
+        std::shared_ptr< Poco::Net::DatagramSocket > m_pUDPSocket{nullptr};
 
     }; /* class NetworkManager */
 

@@ -19,10 +19,16 @@
 
 #include <Umbrella/Umbrella_NetworkManager.hpp>
 
+#include <Ouranos/Ouranos_Common.hpp>
 #include <Ouranos/log/Ouranos_Logger_log.hpp>
 
 #include <boost/exception/all.hpp>
+// #include <boost/lexical_cast.hpp>
 
+#include <Poco/Net/DatagramSocket.h>
+#include <Poco/Net/SocketAddress.h>
+
+#include <charconv>
 #include <exception>
 #include <string_view>
 
@@ -48,6 +54,9 @@ namespace Labsim::project::umbrella
         LogDebug("[Umbrella]"sv)
             << "NetworkManager::Configure(): entry"sv;
 
+        // instantiate the socket
+        this->m_pUDPSocket = std::make_shared< Poco::Net::DatagramSocket >();
+
         // log
         LogDebug("[Umbrella]"sv)
             << "NetworkManager::Configure(): exit"sv;
@@ -64,6 +73,16 @@ namespace Labsim::project::umbrella
         // log
         LogDebug("[Umbrella]"sv)
             << "NetworkManager::Connect(): entry"sv;
+
+        // constants
+        static constexpr auto _s_default_addr = "127.0.0.1"s;
+        static constexpr auto _s_default_port = 12345_UI16;
+
+        // connect to the endpoint
+        this->m_pUDPSocket->bind(Poco::Net::SocketAddress(_s_default_addr, _s_default_port));
+        // this->m_pUDPSocket->setReceiveTimeout(Poco::Timespan(std::chrono::microseconds(100)));
+        this->m_pUDPSocket->setBlocking(false);
+        this->m_pUDPSocket->setKeepAlive(true);
 
         // log
         LogDebug("[Umbrella]"sv)
@@ -82,6 +101,35 @@ namespace Labsim::project::umbrella
         LogDebug("[Umbrella]"sv)
             << "NetworkManager::Process(): entry"sv;
 
+        // constants
+        static constexpr auto _s_default_capacity = std::size_t{1024};
+
+        // read
+        auto buffer  = Poco::Buffer< char >(_s_default_capacity);
+        auto recv_sz = this->m_pUDPSocket->receiveBytes(buffer, 0, 0);
+
+        // check
+        if(recv_sz != 0)
+        {
+            // log
+            LogDebug("[Umbrella]"sv)
+                << "NetworkManager::Process(): Has fresh data ! ["sv
+                << recv_sz
+                << "] bytes to buffer with size/cap "sv
+                << buffer.size()
+                << "/"sv
+                << buffer.capacity();
+
+            // extract
+            std::uint8_t value{0};
+            std::from_chars(buffer.begin(), buffer.end(), value);
+            this->m_networkMsg.push(titans::ouranos::to_enum< UmbrellaNetworkMessageType >(value));
+
+            // mark
+            this->m_bPendingData = true;
+
+        } /* if() */
+
         // log
         LogDebug("[Umbrella]"sv)
             << "NetworkManager::Process(): exit"sv;
@@ -98,6 +146,9 @@ namespace Labsim::project::umbrella
         // log
         LogDebug("[Umbrella]"sv)
             << "NetworkManager::Cleanup(): entry"sv;
+
+        this->m_pUDPSocket->close();
+        this->m_pUDPSocket.reset();
 
         // log
         LogDebug("[Umbrella]"sv)
@@ -116,11 +167,13 @@ namespace Labsim::project::umbrella
         LogDebug("[Umbrella]"sv)
             << "NetworkManager::FlushPendingData(): entry"sv;
 
+        this->m_bPendingData = false;
+
         // log
         LogDebug("[Umbrella]"sv)
             << "NetworkManager::FlushPendingData(): exit"sv;
 
-        return std::stack< UmbrellaNetworkMessageType >{};
+        return {this->m_networkMsg};
 
     } /* FlushPendingData() */
 

@@ -120,7 +120,7 @@ LabsimCMakeTool_ClangTidy(Umbrella-app)
 set_target_properties(
     Umbrella-app
     PROPERTIES 
-        EXPORT_NAME broker-app
+        EXPORT_NAME umbrella-app
 ) 
 
 install(

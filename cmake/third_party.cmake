@@ -29,6 +29,13 @@ find_package(
 		program_options
 )
 
+# Poco
+find_package(
+	Poco
+	REQUIRED COMPONENTS
+		Net
+)
+
 # Doxygen
 find_package(
 	Doxygen

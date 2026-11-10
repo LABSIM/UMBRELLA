@@ -121,7 +121,7 @@ namespace Labsim::project::umbrella
         else
         {
             // log
-            LogInfo("[Umbrella]"sv)
+            LogDebug("[Umbrella]"sv)
                 << "Stim0MotionPlatformProcessor::doSendUpstream(): API send("sv
                 << "heave:"sv << platform.m_fsdi_requestedPosition.heave
                 << "/sway:"sv << platform.m_fsdi_requestedPosition.sway
