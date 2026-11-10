@@ -28,18 +28,6 @@
 #include <string>
 #include <thread>
 
-// enums class
-
-enum class UmbrellaNetworkMessageType : std::uint8_t
-{
-    UNDEFINED_     = 0,
-    BEGIN_STIM_0_  = 1 << 0,
-    BEGIN_STIM_1_  = 1 << 1,
-    BEGIN_STIM_2_  = 1 << 2,
-    STOP_ALL_STIM_ = 1 << 3,
-    STOP_APP_      = 1 << 4
-};
-
 auto
 main(
     int     argc,
@@ -47,12 +35,25 @@ main(
 )
     -> int
 {
+
+    // la "valeur" des messsage ultra simple ;) 
+    enum class UmbrellaNetworkMessageType : std::uint8_t
+    {
+        UNDEFINED_     = 0,
+        BEGIN_STIM_0_  = 1 << 0,
+        BEGIN_STIM_1_  = 1 << 1,
+        BEGIN_STIM_2_  = 1 << 2,
+        STOP_ALL_STIM_ = 1 << 3,
+        STOP_APP_      = 1 << 4
+    };
+
+    // the UDP Socket
     auto pUDPSocket = std::make_shared< Poco::Net::DatagramSocket >();
     pUDPSocket->bind(Poco::Net::SocketAddress("localhost", 12346));
-    // pUDPSocket->setSendTimeout(Poco::Timespan(std::chrono::microseconds(100)));
     pUDPSocket->setBlocking(false);
     pUDPSocket->setKeepAlive(true);
 
+    // the "message sequence"
     auto const rg
         = {
             UmbrellaNetworkMessageType::BEGIN_STIM_0_,
@@ -71,27 +72,48 @@ main(
         };
     auto sequence = std::queue< UmbrellaNetworkMessageType >{rg.begin(), rg.end()};
 
+    // loop ! 
     while(!sequence.empty())
     {
+        // get the next element
         auto msg = sequence.front();
-
         auto msg_str = std::to_string(static_cast< std::uint8_t >(msg));
-
         sequence.pop();
 
-        std::cout << "> will send:" << msg_str << " / remaining:" << sequence.size() << std::endl;
+        // debug
+        std::cout 
+            << "> will send:" 
+            << msg_str 
+            << " / remaining:" 
+            << sequence.size() 
+            << std::endl;
 
+        // send
         try
         {
+        
             pUDPSocket->sendTo(msg_str.data(), msg_str.size(), Poco::Net::SocketAddress("localhost", 12345));
+        
         }
         catch(Poco::Net::NetException ex)
         {
-            std::cerr << "caught: " << ex.what() << " / " << ex.displayText() << " / " << ex.message() << std::endl;
-        }
+        
+            // fcuk...
+            std::cerr 
+                << "caught: " 
+                << ex.what() 
+                << " / " 
+                << ex.displayText() 
+                << " / " 
+                << ex.message() 
+                << std::endl;
+        
+        } /* try() */
 
+        // petite pause
         std::this_thread::sleep_for(std::chrono::seconds(10));
-    }
+
+    } /* while()*/
 
     // success !
     return EXIT_SUCCESS;
