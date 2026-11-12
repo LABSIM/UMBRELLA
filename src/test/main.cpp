@@ -30,13 +30,12 @@
 
 auto
 main(
-    int     argc,
-    char ** pArgv
+    [[maybe_unused]] int     argc,
+    [[maybe_unused]] char ** pArgv
 )
     -> int
 {
-
-    // la "valeur" des messsage ultra simple ;) 
+    // la "valeur" des messsage ultra simple ;)
     enum class UmbrellaNetworkMessageType : std::uint8_t
     {
         UNDEFINED_     = 0,
@@ -53,7 +52,7 @@ main(
     pUDPSocket->setBlocking(false);
     pUDPSocket->setKeepAlive(true);
 
-    // the "message sequence"
+    // the network message scenario
     auto const rg
         = {
             UmbrellaNetworkMessageType::BEGIN_STIM_0_,
@@ -72,42 +71,39 @@ main(
         };
     auto sequence = std::queue< UmbrellaNetworkMessageType >{rg.begin(), rg.end()};
 
-    // loop ! 
+    // loop !
     while(!sequence.empty())
     {
         // get the next element
-        auto msg = sequence.front();
+        auto msg     = sequence.front();
         auto msg_str = std::to_string(static_cast< std::uint8_t >(msg));
         sequence.pop();
 
         // debug
-        std::cout 
-            << "> will send:" 
-            << msg_str 
-            << " / remaining:" 
-            << sequence.size() 
+        std::cout
+            << "> will send:"
+            << msg_str
+            << " / remaining:"
+            << sequence.size()
             << std::endl;
 
         // send
         try
         {
-        
             pUDPSocket->sendTo(msg_str.data(), msg_str.size(), Poco::Net::SocketAddress("localhost", 12345));
-        
         }
-        catch(Poco::Net::NetException ex)
+        catch(Poco::Net::NetException & ex)
         {
-        
             // fcuk...
-            std::cerr 
-                << "caught: " 
-                << ex.what() 
-                << " / " 
-                << ex.displayText() 
-                << " / " 
-                << ex.message() 
+            std::cerr
+                << "caught: "
+                << ex.what()
+                << " / "
+                << ex.displayText()
+                << " / "
+                << ex.message()
                 << std::endl;
-        
+
         } /* try() */
 
         // petite pause

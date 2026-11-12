@@ -23,7 +23,6 @@
 #include <Ouranos/log/Ouranos_Logger_log.hpp>
 
 #include <boost/exception/all.hpp>
-// #include <boost/lexical_cast.hpp>
 
 #include <Poco/Net/DatagramSocket.h>
 #include <Poco/Net/SocketAddress.h>
