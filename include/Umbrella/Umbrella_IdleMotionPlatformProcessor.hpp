@@ -63,6 +63,9 @@ namespace Labsim::project::umbrella
         // pure virtual protected impl
 
         bool
+        doInitFirstPass() override;
+
+        bool
         doResetUpstream(MotionPlatformInfo & platform) override;
 
         bool

@@ -47,6 +47,16 @@ using namespace std::literals::chrono_literals;
 namespace Labsim::project::umbrella
 {
 
+    
+    auto
+    IdleMotionPlatformProcessor::doInitFirstPass()
+        -> bool
+    {
+        // if this point is reached, then success
+        return true;
+
+    } /* doInitFirstPass() */
+
     auto
     IdleMotionPlatformProcessor::doResetUpstream(
         MotionPlatformInfo & platform
@@ -57,20 +67,18 @@ namespace Labsim::project::umbrella
         LogDebug("[Umbrella]"sv)
             << "IdleMotionPlatformProcessor::doResetUpstream(): entry"sv;
 
-        // var
-        static bool bOnce = false;
-
         // center position requested only once
-        if(!bOnce)
+        if(!this->HasInitialized())
         {
+            // log
+            LogDebug("[Umbrella]"sv)
+                << "IdleMotionPlatformProcessor::doResetUpstream(): init"sv;
+
             for(FSDI_Handle api: platform.m_fsdi_apis)
             {
                 ForceSeatDI_Park(api, FSDI_ParkMode_ToCenter);
 
             } /* for() */
-
-            // switch
-            bOnce = true;
 
         } /* if() */
 

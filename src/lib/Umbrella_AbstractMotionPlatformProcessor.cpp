@@ -37,6 +37,22 @@ namespace Labsim::project::umbrella
     )
         -> bool
     {
+        // init iff. first pass
+        if(!this->m_bInit)
+        {
+            if(!this->doInitFirstPass())
+            {
+                // log
+                LogError("[Umbrella]"sv)
+                    << "AbstractMotionPlatformProcessor::Execute(): failed to init processor"sv;
+
+                // fail...
+                return false;
+
+            } /* if() */
+        
+        } /* if() */
+
         // call internal
 
         if(!this->doResetUpstream(platform))
@@ -94,9 +110,21 @@ namespace Labsim::project::umbrella
 
         } /* if() */
 
-        // if reached then it's a success
+        // mark as init == (first pass ok)
+        this->m_bInit = true;
+
+        // finally, if reached then it's a success
         return true;
 
     } /* Execute() */
+
+    auto
+    AbstractMotionPlatformProcessor::HasInitialized() const
+        -> bool
+    {
+        // simply
+        return this->m_bInit;
+
+    } /* HasInitialized() */
 
 } // namespace Labsim::project::umbrella

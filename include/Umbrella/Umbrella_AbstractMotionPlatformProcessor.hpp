@@ -69,9 +69,18 @@ namespace Labsim::project::umbrella
         Execute(MotionPlatformInfo & platform, double const & _elapsed_tick_count)
             -> bool;
 
+        auto
+        HasInitialized() const
+            -> bool;
+
     protected:
 
         // pure virtual protected impl
+
+        virtual auto
+        doInitFirstPass()
+            -> bool
+            = 0;
 
         virtual auto
         doResetUpstream(MotionPlatformInfo & platform)
@@ -97,6 +106,12 @@ namespace Labsim::project::umbrella
         doProcessDownstream(MotionPlatformInfo & platform) const
             -> bool
             = 0;
+
+    private:
+
+        // members
+
+        bool m_bInit{false};
 
     }; /* class AbstractMotionPlatformProcessor */
 

@@ -81,9 +81,9 @@ main(
 
         // debug
         std::cout
-            << "> will send:"
+            << "> will send signal:"
             << msg_str
-            << " / remaining:"
+            << " / remaining count:"
             << sequence.size()
             << std::endl;
 

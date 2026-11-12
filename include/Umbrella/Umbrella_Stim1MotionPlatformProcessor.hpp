@@ -22,6 +22,8 @@
 
 #include <Umbrella/Umbrella_AbstractMotionPlatformProcessor.hpp>
 
+#include <fstream>
+
 // avoid namespace pollution
 namespace Labsim::project::umbrella
 {
@@ -38,7 +40,7 @@ namespace Labsim::project::umbrella
 
         // Coplien form - rule of 5
 
-        constexpr Stim1MotionPlatformProcessor() noexcept
+        Stim1MotionPlatformProcessor() noexcept
             = default;
 
         Stim1MotionPlatformProcessor(self_type const & _rhs) noexcept
@@ -63,6 +65,9 @@ namespace Labsim::project::umbrella
         // pure virtual protected impl
 
         bool
+        doInitFirstPass() override;
+
+        bool
         doResetUpstream(MotionPlatformInfo & platform) override;
 
         bool
@@ -76,6 +81,18 @@ namespace Labsim::project::umbrella
 
         bool
         doProcessDownstream(MotionPlatformInfo & platform) const override;
+
+    private:
+
+        // local members
+
+        bool     m_setting_is_debug{false};
+        uint32_t m_setting_index{0};
+        double   m_setting_amplitude{0.0};
+        double   m_setting_frequency{0.0};
+        double   m_setting_y_axis_phase_offset{0.0};
+        double   m_setting_z_axis_phase_offset{0.0};
+        std::ofstream m_output_file;
 
     }; /* class Stim1MotionPlatformProcessor */
 

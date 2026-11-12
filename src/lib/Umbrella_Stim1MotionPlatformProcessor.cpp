@@ -31,7 +31,6 @@
 #include <cmath>
 #include <exception>
 #include <format>
-#include <fstream>
 #include <numbers>
 #include <regex>
 #include <string_view>
@@ -47,6 +46,41 @@ using namespace std::literals::chrono_literals;
 // avoid namespace pollution
 namespace Labsim::project::umbrella
 {
+
+    auto
+    Stim1MotionPlatformProcessor::doInitFirstPass()
+        -> bool 
+    {
+        // log
+        LogDebug("[Umbrella]"sv)
+            << "Stim1MotionPlatformProcessor::doInitFirstPass(): entry"sv;
+    
+        // get a handle
+        auto handle = ApplicationManager::get();
+
+        // extract settings
+        this->m_setting_is_debug = handle->getOptions().isDebugSimulation();
+        this->m_setting_index    = handle->getOptions().getFSDIPlatformIndex();
+        this->m_setting_amplitude           = handle->getOptions().getStim1Amplitude();
+        this->m_setting_frequency           = handle->getOptions().getStim1Frequency();
+        this->m_setting_y_axis_phase_offset = handle->getOptions().getYAxisPhaseOffset();
+        this->m_setting_z_axis_phase_offset = handle->getOptions().getZAxisPhaseOffset();
+
+        // configure outputs 
+        auto output_path 
+            = "umbrella_stim1_"s + std::regex_replace(titans::ouranos::Common::GenerateTimestamp(), std::regex{":"}, "-") + ".csv"s;
+        this->m_output_file
+            = std::ofstream{output_path.data(), std::ios_base::out | std::ios_base::app}
+            << "timestamp,requestedPosition.sway,requestedPosition.heave,requestedPosition.surge,actualPosition.sway,actualPosition.heave,actualPosition.surge\n"sv;
+
+        // log
+        LogDebug("[Umbrella]"sv)
+            << "Stim1MotionPlatformProcessor::doInitFirstPass(): exit"sv;
+
+        // if this point is reached, then success
+        return true;
+
+    } /* doInitFirstPass() */
 
     auto
     Stim1MotionPlatformProcessor::doResetUpstream(
@@ -91,29 +125,6 @@ namespace Labsim::project::umbrella
         static constexpr auto const _one_constant = 1.0;
         static constexpr auto const _two_constant = 2.0;
 
-        // local vars
-        static bool   bInit = false;
-        static double setting_amplitude;
-        static double setting_frequency;
-        static double setting_y_axis_phase_offset;
-        static double setting_z_axis_phase_offset;
-
-        if(!bInit)
-        {
-            // get a handle
-            auto handle = ApplicationManager::get();
-
-            // extract settings
-            setting_amplitude           = handle->getOptions().getStim1Amplitude();
-            setting_frequency           = handle->getOptions().getStim1Frequency();
-            setting_y_axis_phase_offset = handle->getOptions().getYAxisPhaseOffset();
-            setting_z_axis_phase_offset = handle->getOptions().getZAxisPhaseOffset();
-
-            // set
-            bInit = true;
-
-        } /* if() */
-
         // encapsulate all calculus
         try
         {
@@ -123,10 +134,10 @@ namespace Labsim::project::umbrella
             //
             platform.m_fsdi_requestedPosition.sway
                 = boost::numeric_cast< FSDI_FLOAT >(
-                    setting_amplitude
+                    this->m_setting_amplitude
                     * std::sin(
                         (_two_constant * std::numbers::pi * _elapsed_tick_count)
-                        / (_one_constant / setting_frequency)
+                        / (_one_constant / this->m_setting_frequency)
                     )
                 );
 
@@ -136,16 +147,16 @@ namespace Labsim::project::umbrella
             //
             platform.m_fsdi_requestedPosition.heave
                 = boost::numeric_cast< FSDI_FLOAT >(
-                    setting_amplitude
+                    this->m_setting_amplitude
                     * std::sin(
                         (
                             (_two_constant * std::numbers::pi * _elapsed_tick_count)
-                            / (_one_constant / setting_frequency)
+                            / (_one_constant / this->m_setting_frequency)
                         )
                         + ((std::numbers::pi / _two_constant)
                            * ((_two_constant * std::numbers::pi * _elapsed_tick_count)
-                              / ((_one_constant / setting_frequency)
-                                 * setting_y_axis_phase_offset
+                              / ((_one_constant / this->m_setting_frequency)
+                                 * this->m_setting_y_axis_phase_offset
                               )
                            )
                         )
@@ -158,16 +169,16 @@ namespace Labsim::project::umbrella
             //
             platform.m_fsdi_requestedPosition.surge
                 = boost::numeric_cast< FSDI_FLOAT >(
-                    setting_amplitude
+                    this->m_setting_amplitude
                     * std::sin(
                         (
                             (_two_constant * std::numbers::pi * _elapsed_tick_count)
-                            / (_one_constant / setting_frequency)
+                            / (_one_constant / this->m_setting_frequency)
                         )
                         + ((std::numbers::pi / _two_constant)
                            * ((_two_constant * std::numbers::pi * _elapsed_tick_count)
-                              / ((_one_constant / setting_frequency)
-                                 * setting_z_axis_phase_offset
+                              / ((_one_constant / this->m_setting_frequency)
+                                 * this->m_setting_z_axis_phase_offset
                               )
                            )
                         )
@@ -237,18 +248,12 @@ namespace Labsim::project::umbrella
         LogDebug("[Umbrella]"sv)
             << "Stim1MotionPlatformProcessor::doSendUpstream(): entry"sv;
 
-        // setting
-        static auto const _setting_is_debug
-            = ApplicationManager::get()->getOptions().isDebugSimulation();
-        static auto const _setting_index
-            = ApplicationManager::get()->getOptions().getFSDIPlatformIndex();
-
         // check
-        if(!_setting_is_debug)
+        if(!this->m_setting_is_debug)
         {
             // send requested datas !
             if(ForceSeatDI_SendTopTablePosPhy(
-                   platform.m_fsdi_apis[_setting_index],
+                   platform.m_fsdi_apis[this->m_setting_index],
                    &platform.m_fsdi_requestedPosition
                )
                != FSDI_True)
@@ -256,7 +261,7 @@ namespace Labsim::project::umbrella
                 // failed...
                 LogError("[Umbrella]"sv)
                     << "Stim1MotionPlatformProcessor::doSendUpstream(): failed to send request to platform [id:"sv
-                    << (_setting_index + 1)
+                    << (this->m_setting_index + 1)
                     << "]"sv;
 
             } /* if() */
@@ -292,19 +297,13 @@ namespace Labsim::project::umbrella
         LogDebug("[Umbrella]"sv)
             << "Stim1MotionPlatformProcessor::doReadDownstream(): entry"sv;
 
-        // setting
-        static auto const _setting_is_debug
-            = ApplicationManager::get()->getOptions().isDebugSimulation();
-        static auto const _setting_index
-            = ApplicationManager::get()->getOptions().getFSDIPlatformIndex();
-
         // check
-        if(!_setting_is_debug)
+        if(!this->m_setting_is_debug)
         {
             // Read current actuators position
 
             if(ForceSeatDI_GetActuatorsPosLog(
-                   platform.m_fsdi_apis.at(_setting_index),
+                   platform.m_fsdi_apis.at(this->m_setting_index),
                    &platform.m_fsdi_actualPosition
                )
                != FSDI_True)
@@ -316,7 +315,7 @@ namespace Labsim::project::umbrella
             } /* if() */
 
             if(ForceSeatDI_GetTopTablePosPhy(
-                   platform.m_fsdi_apis.at(_setting_index),
+                   platform.m_fsdi_apis.at(this->m_setting_index),
                    &platform.m_fsdi_actualTopTablePosition
                )
                != FSDI_True)
@@ -328,7 +327,7 @@ namespace Labsim::project::umbrella
             } /* if() */
 
             if(ForceSeatDI_GetPlatformInfo(
-                   platform.m_fsdi_apis.at(_setting_index),
+                   platform.m_fsdi_apis.at(this->m_setting_index),
                    &platform.m_fsdi_actualPlatformInfo
                )
                != FSDI_True)
@@ -336,7 +335,7 @@ namespace Labsim::project::umbrella
                 // failed...
                 LogError("[Umbrella]"sv)
                     << "Stim1MotionPlatformProcessor::doReadDownstream(): Failed to get platform info with [ErrorCode:"sv
-                    << ForceSeatDI_GetRecentErrorCode(platform.m_fsdi_apis.at(_setting_index))
+                    << ForceSeatDI_GetRecentErrorCode(platform.m_fsdi_apis.at(this->m_setting_index))
                     << "]"sv;
 
             } /* if() */
@@ -362,14 +361,7 @@ namespace Labsim::project::umbrella
         LogDebug("[Umbrella]"sv)
             << "Stim1MotionPlatformProcessor::doProcessDownstream(): entry"sv;
 
-        // log to file
-        static auto const path
-            = "umbrella_stim1_"s + std::regex_replace(titans::ouranos::Common::GenerateTimestamp(), std::regex{":"}, "-") + ".csv"s;
-        static auto output_file
-            = std::ofstream{path.data(), std::ios_base::out | std::ios_base::app}
-              << "timestamp,requestedPosition.sway,requestedPosition.heave,requestedPosition.surge,actualPosition.sway,actualPosition.heave,actualPosition.surge\n"sv;
-
-        output_file
+        this->m_output_file
             << titans::ouranos::Common::GenerateTimestamp()
             << ","sv
             << platform.m_fsdi_requestedPosition.sway
