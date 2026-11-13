@@ -47,7 +47,6 @@ using namespace std::literals::chrono_literals;
 namespace Labsim::project::umbrella
 {
 
-    
     auto
     IdleMotionPlatformProcessor::doInitFirstPass()
         -> bool
@@ -128,7 +127,7 @@ namespace Labsim::project::umbrella
     auto
     IdleMotionPlatformProcessor::doProcessDownstream(
         [[maybe_unused]] MotionPlatformInfo & platform
-    ) const
+    )
         -> bool
     {
         // if this point is reached, then success

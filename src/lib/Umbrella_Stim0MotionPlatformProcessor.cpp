@@ -29,6 +29,7 @@
 #include <chrono>
 #include <format>
 #include <regex>
+#include <string>
 #include <string_view>
 #include <thread>
 #include <vector>
@@ -45,25 +46,31 @@ namespace Labsim::project::umbrella
 
     auto
     Stim0MotionPlatformProcessor::doInitFirstPass()
-        -> bool 
+        -> bool
     {
         // log
         LogDebug("[Umbrella]"sv)
             << "Stim0MotionPlatformProcessor::doInitFirstPass(): entry"sv;
-    
+
         // get a handle
         auto handle = ApplicationManager::get();
 
         // extract settings
         this->m_setting_is_debug = handle->getOptions().isDebugSimulation();
         this->m_setting_index    = handle->getOptions().getFSDIPlatformIndex();
+        auto output_directory    = handle->getOptions().getOutputDataDirectory();
 
-        // configure outputs 
-        auto output_path 
+        // configure outputs
+        auto output_filename
             = "umbrella_stim0_"s + std::regex_replace(titans::ouranos::Common::GenerateTimestamp(), std::regex{":"}, "-") + ".csv"s;
+        if(!output_directory.empty())
+        {
+            output_directory != "/"s)
+            output_path.insert(output_path.begin(),output_directory.begin(),output_directory.end());
+        }
         this->m_output_file
             = std::ofstream{output_path.data(), std::ios_base::out | std::ios_base::app}
-            << "timestamp,requestedPosition.sway,requestedPosition.heave,requestedPosition.surge,actualPosition.sway,actualPosition.heave,actualPosition.surge\n"sv;
+              << "timestamp,requestedPosition.sway,requestedPosition.heave,requestedPosition.surge,actualPosition.sway,actualPosition.heave,actualPosition.surge\n"sv;
 
         // log
         LogDebug("[Umbrella]"sv)
@@ -230,7 +237,7 @@ namespace Labsim::project::umbrella
     auto
     Stim0MotionPlatformProcessor::doProcessDownstream(
         MotionPlatformInfo & platform
-    ) const
+    )
         -> bool
     {
         // log

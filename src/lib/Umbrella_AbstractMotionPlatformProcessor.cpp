@@ -50,7 +50,7 @@ namespace Labsim::project::umbrella
                 return false;
 
             } /* if() */
-        
+
         } /* if() */
 
         // call internal

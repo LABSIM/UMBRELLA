@@ -78,7 +78,7 @@ namespace Labsim::project::umbrella
         doReadDownstream(MotionPlatformInfo & platform) override;
 
         bool
-        doProcessDownstream(MotionPlatformInfo & platform) const override;
+        doProcessDownstream(MotionPlatformInfo & platform) override;
 
     }; /* class IdleMotionPlatformProcessor */
 

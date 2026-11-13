@@ -80,18 +80,18 @@ namespace Labsim::project::umbrella
         doReadDownstream(MotionPlatformInfo & platform) override;
 
         bool
-        doProcessDownstream(MotionPlatformInfo & platform) const override;
+        doProcessDownstream(MotionPlatformInfo & platform) override;
 
     private:
 
         // local members
 
-        bool     m_setting_is_debug{false};
-        uint32_t m_setting_index{0};
-        double   m_setting_amplitude{0.0};
-        double   m_setting_frequency{0.0};
-        double   m_setting_y_axis_phase_offset{0.0};
-        double   m_setting_z_axis_phase_offset{0.0};
+        bool          m_setting_is_debug{false};
+        uint32_t      m_setting_index{0};
+        double        m_setting_amplitude{0.0};
+        double        m_setting_frequency{0.0};
+        double        m_setting_y_axis_phase_offset{0.0};
+        double        m_setting_z_axis_phase_offset{0.0};
         std::ofstream m_output_file;
 
     }; /* class Stim2MotionPlatformProcessor */

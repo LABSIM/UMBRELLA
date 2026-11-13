@@ -111,6 +111,10 @@ namespace Labsim::project::umbrella
         static constexpr auto const _s_default_y_axis_phase_offset_s = 5.0;
         static constexpr auto const _s_default_z_axis_phase_offset_s = 7.0;
 
+        // default output data directory
+
+        static constexpr auto const _s_default_output_data_directory = "data"sv;
+
         // using enum
 
         using enum CLIOptionsType;
@@ -247,6 +251,13 @@ namespace Labsim::project::umbrella
             return this->m_ZAxisPhaseOffset;
         };
 
+        [[nodiscard]] constexpr auto
+        getOutputDataDirectory() const
+            -> decltype(auto)
+        {
+            return this->m_outputDataDirectory;
+        };
+
     private:
 
         // members
@@ -265,6 +276,7 @@ namespace Labsim::project::umbrella
         double                    m_stim2Amplitude{};
         double                    m_YAxisPhaseOffset{};
         double                    m_ZAxisPhaseOffset{};
+        std::string               m_outputDataDirectory{};
 
     }; /* class CommandLineOptions */
 

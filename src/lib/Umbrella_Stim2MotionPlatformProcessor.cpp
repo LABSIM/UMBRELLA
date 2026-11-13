@@ -48,29 +48,29 @@ namespace Labsim::project::umbrella
 {
     auto
     Stim2MotionPlatformProcessor::doInitFirstPass()
-        -> bool 
+        -> bool
     {
         // log
         LogDebug("[Umbrella]"sv)
             << "Stim2MotionPlatformProcessor::doInitFirstPass(): entry"sv;
-    
+
         // get a handle
         auto handle = ApplicationManager::get();
 
         // extract settings
-        this->m_setting_is_debug = handle->getOptions().isDebugSimulation();
-        this->m_setting_index    = handle->getOptions().getFSDIPlatformIndex();
+        this->m_setting_is_debug            = handle->getOptions().isDebugSimulation();
+        this->m_setting_index               = handle->getOptions().getFSDIPlatformIndex();
         this->m_setting_amplitude           = handle->getOptions().getStim1Amplitude();
         this->m_setting_frequency           = handle->getOptions().getStim1Frequency();
         this->m_setting_y_axis_phase_offset = handle->getOptions().getYAxisPhaseOffset();
         this->m_setting_z_axis_phase_offset = handle->getOptions().getZAxisPhaseOffset();
 
-        // configure outputs 
-        auto output_path 
+        // configure outputs
+        auto output_path
             = "umbrella_stim2_"s + std::regex_replace(titans::ouranos::Common::GenerateTimestamp(), std::regex{":"}, "-") + ".csv"s;
         this->m_output_file
             = std::ofstream{output_path.data(), std::ios_base::out | std::ios_base::app}
-            << "timestamp,requestedPosition.sway,requestedPosition.heave,requestedPosition.surge,actualPosition.sway,actualPosition.heave,actualPosition.surge\n"sv;
+              << "timestamp,requestedPosition.sway,requestedPosition.heave,requestedPosition.surge,actualPosition.sway,actualPosition.heave,actualPosition.surge\n"sv;
 
         // log
         LogDebug("[Umbrella]"sv)
@@ -123,30 +123,6 @@ namespace Labsim::project::umbrella
         // invariant
         static constexpr auto const _one_constant = 1.0;
         static constexpr auto const _two_constant = 2.0;
-
-        // decl. settings
-        double this->m_setting_amplitude{0.0};
-        double this->m_setting_frequency{0.0};
-        double this->m_setting_y_axis_phase_offset{0.0};
-        double this->m_setting_z_axis_phase_offset{0.0};
-
-        // init only once
-        if(!this->HasInitialized())
-        {
-            // log
-            LogDebug("[Umbrella]"sv)
-                << "Stim2MotionPlatformProcessor::doBuildUpstream(): init"sv;
-
-            // get a handle
-            auto handle = ApplicationManager::get();
-
-            // extract settings
-            this->m_setting_amplitude           = handle->getOptions().getStim1Amplitude();
-            this->m_setting_frequency           = handle->getOptions().getStim1Frequency();
-            this->m_setting_y_axis_phase_offset = handle->getOptions().getYAxisPhaseOffset();
-            this->m_setting_z_axis_phase_offset = handle->getOptions().getZAxisPhaseOffset();
-
-        } /* if()*/
 
         // encapsulate all calculus
         try
@@ -377,7 +353,7 @@ namespace Labsim::project::umbrella
     auto
     Stim2MotionPlatformProcessor::doProcessDownstream(
         MotionPlatformInfo & platform
-    ) const
+    )
         -> bool
     {
         // log

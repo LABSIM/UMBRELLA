@@ -191,6 +191,11 @@ namespace Labsim::project::umbrella
                     "z-offset",
                     po::value< double >(&this->m_ZAxisPhaseOffset)->default_value(self_type::_s_default_z_axis_phase_offset_s),
                     "The platform Z axis simulation phase offset in Second"
+                )
+                (
+                    "output-dir",
+                    po::value< std::string >(&this->m_outputDataDirectory)->default_value(std::string{self_type::_s_default_output_data_directory}),
+                    "The directory where the output data wil be recorded, defaul will otput data into current binary directory"
                 );
             // clang-format on
 
@@ -250,20 +255,21 @@ namespace Labsim::project::umbrella
             // log result
             Labsim::LogInfo("[Umbrella]"sv)
                 << "CommandLineOptions::Parse() : Command line parsing OK ! found {"sv
-                << "IsDebugSimulation = "sv << (this->isDebugSimulation() ? "true"sv : "false"sv) << ", "
-                << "FSDIPlatformIndex = "sv << this->getFSDIPlatformIndex() << ", "
-                << "FSDIPlatformCount = "sv << this->getFSDIPlatformCount() << ", "
-                << "FSDIPlatformIP = "sv << this->getFSDIPlatformIP() << ", "
-                << "FSDIPlatformSN = "sv << converter.to_bytes(this->getFSDIPlatformSN()) << ", "
-                << "IdleInitDuration = "sv << this->getIdleInitDuration() << ", "
-                << "TargetLoopPeriod = "sv << this->getTargetLoopPeriod() << ", "
-                << "StimMode = "sv << titans::ouranos::to_underlying(this->getStimMode()) << ", "
-                << "Stim1Frequency = "sv << this->getStim1Frequency() << ", "
-                << "Stim1Amplitude = "sv << this->getStim1Amplitude() << ", "
-                << "Stim2Frequency = "sv << this->getStim2Frequency() << ", "
-                << "Stim2Amplitude = "sv << this->getStim2Amplitude() << ", "
-                << "YAxisPhaseOffset = "sv << this->getYAxisPhaseOffset() << ", "
-                << "ZAxisPhaseOffset = "sv << this->getZAxisPhaseOffset() << "}"sv;
+                << "IsDebugSimulation = "sv << (this->isDebugSimulation() ? "true"sv : "false"sv) << ", "sv
+                << "FSDIPlatformIndex = "sv << this->getFSDIPlatformIndex() << ", "sv
+                << "FSDIPlatformCount = "sv << this->getFSDIPlatformCount() << ", "sv
+                << "FSDIPlatformIP = "sv << this->getFSDIPlatformIP() << ", "sv
+                << "FSDIPlatformSN = "sv << converter.to_bytes(this->getFSDIPlatformSN()) << ", "sv
+                << "IdleInitDuration = "sv << this->getIdleInitDuration() << ", "sv
+                << "TargetLoopPeriod = "sv << this->getTargetLoopPeriod() << ", "sv
+                << "StimMode = "sv << titans::ouranos::to_underlying(this->getStimMode()) << ", "sv
+                << "Stim1Frequency = "sv << this->getStim1Frequency() << ", "sv
+                << "Stim1Amplitude = "sv << this->getStim1Amplitude() << ", "sv
+                << "Stim2Frequency = "sv << this->getStim2Frequency() << ", "sv
+                << "Stim2Amplitude = "sv << this->getStim2Amplitude() << ", "sv
+                << "YAxisPhaseOffset = "sv << this->getYAxisPhaseOffset() << ", "sv
+                << "ZAxisPhaseOffset = "sv << this->getZAxisPhaseOffset() << ", "sv
+                << "OutputDataDirectory = "sv << this->getOutputDataDirectory() << "}"sv;
 
             // update status
             status = CLI_OPTIONS_OK_;

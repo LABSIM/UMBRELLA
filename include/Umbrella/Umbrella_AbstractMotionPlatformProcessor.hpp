@@ -103,7 +103,7 @@ namespace Labsim::project::umbrella
             = 0;
 
         virtual auto
-        doProcessDownstream(MotionPlatformInfo & platform) const
+        doProcessDownstream(MotionPlatformInfo & platform)
             -> bool
             = 0;
 
