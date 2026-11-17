@@ -113,7 +113,7 @@ namespace Labsim::project::umbrella
 
         // default output data directory
 
-        static constexpr auto const _s_default_output_data_directory = "data"sv;
+        static constexpr auto const _s_default_output_data_directory = "/data"sv;
 
         // using enum
 

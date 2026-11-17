@@ -28,6 +28,7 @@
 
 #include <atomic>
 #include <vector>
+#include <string>
 
 // avoid namespace pollution
 namespace Labsim::project::umbrella
@@ -89,6 +90,13 @@ namespace Labsim::project::umbrella
         {
             return this->m_options;
         };
+        
+        [[nodiscard]] constexpr auto
+        getSessionTimestamp() const
+            -> std::string const & 
+        {
+            return this->m_sessionTimestamp;
+        };
 
     private:
 
@@ -132,6 +140,7 @@ namespace Labsim::project::umbrella
         std::atomic< bool >        m_bEnd{false};
         std::size_t                m_argc{0UZ};
         std::vector< std::string > m_argv;
+        std::string const          m_sessionTimestamp;
         CommandLineOptions         m_options;
 
     }; /* class ApplicationManager */

@@ -30,6 +30,7 @@
 #include <chrono>
 #include <cmath>
 #include <exception>
+#include <filesystem>
 #include <format>
 #include <numbers>
 #include <regex>
@@ -60,18 +61,60 @@ namespace Labsim::project::umbrella
         auto handle = ApplicationManager::get();
 
         // extract settings
-        this->m_setting_is_debug            = handle->getOptions().isDebugSimulation();
-        this->m_setting_index               = handle->getOptions().getFSDIPlatformIndex();
-        this->m_setting_amplitude           = handle->getOptions().getStim1Amplitude();
-        this->m_setting_frequency           = handle->getOptions().getStim1Frequency();
-        this->m_setting_y_axis_phase_offset = handle->getOptions().getYAxisPhaseOffset();
-        this->m_setting_z_axis_phase_offset = handle->getOptions().getZAxisPhaseOffset();
+        this->m_setting_is_debug = handle->getOptions().isDebugSimulation();
+        this->m_setting_index    = handle->getOptions().getFSDIPlatformIndex();
+        auto output_filename
+            = "umbrella_"s
+              + std::regex_replace(
+                  titans::ouranos::Common::GenerateTimestamp(),
+                  std::regex{":"},
+                  "-"
+              )
+              + "_stim1.csv"s;
+        auto output_session_path
+            = std::regex_replace(
+                handle->getSessionTimestamp(),
+                std::regex{":"},
+                "-"
+            );
+        auto output_path
+            = std::filesystem::path{handle->getOptions().getOutputDataDirectory()};
+
+        // check emptyness        
+        if(output_path.empty())
+        {
+            // iff. concat session path
+            output_path += output_session_path;
+        }
+        else
+        {
+
+            // check existence
+            if(!std::filesystem::directory_entry{output_path}.exists())
+            {
+                // log
+                LogError("[Umbrella]"sv)
+                    << "Stim1MotionPlatformProcessor::doInitFirstPass(): output directory does not exist..."sv;
+                
+                // failure
+                return false;
+            
+            } /* if() */
+            
+            // append with OS sep.
+            output_path /= output_session_path;
+
+        } /* if() */
+
+        // create dir
+        std::filesystem::create_directories(output_path);
 
         // configure outputs
-        auto output_path
-            = "umbrella_stim1_"s + std::regex_replace(titans::ouranos::Common::GenerateTimestamp(), std::regex{":"}, "-") + ".csv"s;
         this->m_output_file
-            = std::ofstream{output_path.data(), std::ios_base::out | std::ios_base::app}
+            = std::ofstream{
+                  output_path / output_filename,
+                  std::ios_base::out | std::ios_base::app
+              }
               << "timestamp,requestedPosition.sway,requestedPosition.heave,requestedPosition.surge,actualPosition.sway,actualPosition.heave,actualPosition.surge\n"sv;
 
         // log

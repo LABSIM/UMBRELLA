@@ -21,6 +21,7 @@
 #include <Umbrella/Umbrella_MotionPlatformManager.hpp>
 #include <Umbrella/Umbrella_NetworkManager.hpp>
 
+#include <Ouranos/Ouranos_Common.hpp>
 #include <Ouranos/log/Ouranos_Logger_log.hpp>
 
 #include <boost/exception/diagnostic_information.hpp>
@@ -42,11 +43,14 @@ namespace Labsim::project::umbrella
         base_type::_token_type const & _token
     ) noexcept
         : base_type(_token)
+        // init the session timestamp
+        , m_sessionTimestamp(titans::ouranos::Common::GenerateTimestamp())
     {
         // debug
         Labsim::LogDebug("[Umbrella]"sv)
             << "ApplicationManager::ApplicationManager() : token constructor call"sv;
-    };
+    
+    }; /* ApplicationManager() */
 
     auto
     ApplicationManager::Initialize(
