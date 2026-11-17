@@ -80,7 +80,7 @@ namespace Labsim::project::umbrella
         auto output_path
             = std::filesystem::path{handle->getOptions().getOutputDataDirectory()};
 
-        // check emptyness        
+        // check emptyness
         if(output_path.empty())
         {
             // iff. concat session path
@@ -88,19 +88,18 @@ namespace Labsim::project::umbrella
         }
         else
         {
-
             // check existence
             if(!std::filesystem::directory_entry{output_path}.exists())
             {
                 // log
                 LogError("[Umbrella]"sv)
                     << "Stim1MotionPlatformProcessor::doInitFirstPass(): output directory does not exist..."sv;
-                
+
                 // failure
                 return false;
-            
+
             } /* if() */
-            
+
             // append with OS sep.
             output_path /= output_session_path;
 

@@ -27,8 +27,8 @@
 #include <Ouranos/pattern/Ouranos_Singleton_pattern.hpp>
 
 #include <atomic>
-#include <vector>
 #include <string>
+#include <vector>
 
 // avoid namespace pollution
 namespace Labsim::project::umbrella
@@ -90,10 +90,10 @@ namespace Labsim::project::umbrella
         {
             return this->m_options;
         };
-        
+
         [[nodiscard]] constexpr auto
         getSessionTimestamp() const
-            -> std::string const & 
+            -> std::string const &
         {
             return this->m_sessionTimestamp;
         };

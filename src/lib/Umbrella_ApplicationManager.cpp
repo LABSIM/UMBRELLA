@@ -49,7 +49,7 @@ namespace Labsim::project::umbrella
         // debug
         Labsim::LogDebug("[Umbrella]"sv)
             << "ApplicationManager::ApplicationManager() : token constructor call"sv;
-    
+
     }; /* ApplicationManager() */
 
     auto
