@@ -61,8 +61,14 @@ namespace Labsim::project::umbrella
         auto handle = ApplicationManager::get();
 
         // extract settings
-        this->m_setting_is_debug = handle->getOptions().isDebugSimulation();
-        this->m_setting_index    = handle->getOptions().getFSDIPlatformIndex();
+        this->m_setting_is_debug            = handle->getOptions().isDebugSimulation();
+        this->m_setting_index               = handle->getOptions().getFSDIPlatformIndex();
+        this->m_setting_amplitude           = handle->getOptions().getStim1Amplitude();
+        this->m_setting_frequency           = handle->getOptions().getStim1Frequency();
+        this->m_setting_y_axis_phase_offset = handle->getOptions().getYAxisPhaseOffset();
+        this->m_setting_z_axis_phase_offset = handle->getOptions().getZAxisPhaseOffset();
+
+        // configure outputs
         auto output_filename
             = "umbrella_"s
               + std::regex_replace(
