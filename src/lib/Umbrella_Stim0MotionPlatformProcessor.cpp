@@ -148,7 +148,6 @@ namespace Labsim::project::umbrella
             = platform.m_fsdi_requestedPosition.sway
             = platform.m_fsdi_requestedPosition.surge
             = 0.0F;
-
         // log
         LogDebug("[Umbrella]"sv)
             << "Stim0MotionPlatformProcessor::doResetUpstream(): exit"sv;

@@ -38,6 +38,7 @@ namespace Labsim::project::umbrella
     IdleMotionPlatformProcessor::doInitFirstPass()
         -> bool
     {
+        
         // if this point is reached, then success
         return true;
 
@@ -56,13 +57,46 @@ namespace Labsim::project::umbrella
         // center position requested only once
         if(!this->HasInitialized())
         {
+            
+            // constant
+            static constexpr auto const _s_default_maxSpeed = 65535_UI16;
+
+            // reset all
+            platform.m_fsdi_requestedPosition.maxSpeed            = _s_default_maxSpeed;
+            platform.m_fsdi_requestedPosition.pause               = FSDI_True;
+            platform.m_fsdi_requestedPosition.strategy            = FSDI_Strategy_BestMatch;
+            platform.m_fsdi_requestedPosition.accelerationProfile = FSDI_AP_Smoothest;
+
+            // also zero requested computed value
+            platform.m_fsdi_requestedPosition.yaw
+                = platform.m_fsdi_requestedPosition.pitch
+                = platform.m_fsdi_requestedPosition.roll
+                = platform.m_fsdi_requestedPosition.heave
+                = platform.m_fsdi_requestedPosition.sway
+                = platform.m_fsdi_requestedPosition.surge
+                = 0.0F;
+        
             // loop
             for(FSDI_Handle api: platform.m_fsdi_apis)
             {
+
+                // mark as paused
+                if(ForceSeatDI_SendTopTablePosPhy(
+                    api,
+                    &platform.m_fsdi_requestedPosition
+                )
+                != FSDI_True)
+                {
+                    // failed...
+                    LogError("[Umbrella]"sv)
+                        << "IdleMotionPlatformProcessor::doSendUpstream(): failed to send request to platform..."sv;
+
+                } /* if() */
+
                 // log
                 LogInfo("[Umbrella]"sv)
-                    << "IdleMotionPlatformProcessor::doResetUpstream():  will park to center, request sent"sv;
-
+                    << "IdleMotionPlatformProcessor::doResetUpstream(): will park to center, request sent"sv;
+                
                 // call
                 ForceSeatDI_Park(api, FSDI_ParkMode_ToCenter);
 
