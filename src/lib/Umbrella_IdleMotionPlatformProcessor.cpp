@@ -38,7 +38,6 @@ namespace Labsim::project::umbrella
     IdleMotionPlatformProcessor::doInitFirstPass()
         -> bool
     {
-        
         // if this point is reached, then success
         return true;
 
@@ -57,13 +56,12 @@ namespace Labsim::project::umbrella
         // center position requested only once
         if(!this->HasInitialized())
         {
-            
             // constant
-            static constexpr auto const _s_default_maxSpeed = 65535_UI16;
+            static constexpr auto const _s_default_maxSpeed = 15000_UI16;
 
             // reset all
             platform.m_fsdi_requestedPosition.maxSpeed            = _s_default_maxSpeed;
-            platform.m_fsdi_requestedPosition.pause               = FSDI_True;
+            platform.m_fsdi_requestedPosition.pause               = FSDI_False;
             platform.m_fsdi_requestedPosition.strategy            = FSDI_Strategy_BestMatch;
             platform.m_fsdi_requestedPosition.accelerationProfile = FSDI_AP_Smoothest;
 
@@ -75,17 +73,16 @@ namespace Labsim::project::umbrella
                 = platform.m_fsdi_requestedPosition.sway
                 = platform.m_fsdi_requestedPosition.surge
                 = 0.0F;
-        
+
             // loop
             for(FSDI_Handle api: platform.m_fsdi_apis)
             {
-
                 // mark as paused
                 if(ForceSeatDI_SendTopTablePosPhy(
-                    api,
-                    &platform.m_fsdi_requestedPosition
-                )
-                != FSDI_True)
+                       api,
+                       &platform.m_fsdi_requestedPosition
+                   )
+                   != FSDI_True)
                 {
                     // failed...
                     LogError("[Umbrella]"sv)
@@ -96,7 +93,7 @@ namespace Labsim::project::umbrella
                 // log
                 LogInfo("[Umbrella]"sv)
                     << "IdleMotionPlatformProcessor::doResetUpstream(): will park to center, request sent"sv;
-                
+
                 // call
                 ForceSeatDI_Park(api, FSDI_ParkMode_ToCenter);
 
