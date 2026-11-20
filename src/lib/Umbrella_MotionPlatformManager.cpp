@@ -329,7 +329,7 @@ namespace Labsim::project::umbrella
         // cleanup
         for(FSDI_Handle api: this->m_pPlatform->m_fsdi_apis)
         {
-            ForceSeatDI_Park(api, FSDI_ParkMode_ForTransport);
+            ForceSeatDI_Park(api, FSDI_ParkMode_Normal);
             ForceSeatDI_Delete(api);
 
         } /* for() */

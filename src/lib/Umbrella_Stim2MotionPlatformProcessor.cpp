@@ -142,13 +142,13 @@ namespace Labsim::project::umbrella
         // constant
         static constexpr auto const _s_default_maxSpeed = 65535_UI16;
 
-        // fcku, not trivial...
+        // reset all
         platform.m_fsdi_requestedPosition.maxSpeed            = _s_default_maxSpeed;
-        platform.m_fsdi_requestedPosition.pause               = FSDI_True;
+        platform.m_fsdi_requestedPosition.pause               = FSDI_False;
         platform.m_fsdi_requestedPosition.strategy            = FSDI_Strategy_BestMatch;
         platform.m_fsdi_requestedPosition.accelerationProfile = FSDI_AP_Rapid;
 
-        // reset requested
+        // also zero requested computed value
         platform.m_fsdi_requestedPosition.yaw
             = platform.m_fsdi_requestedPosition.pitch
             = platform.m_fsdi_requestedPosition.roll
@@ -156,10 +156,6 @@ namespace Labsim::project::umbrella
             = platform.m_fsdi_requestedPosition.sway
             = platform.m_fsdi_requestedPosition.surge
             = 0.0F;
-
-        // fcku, not trivial...
-        platform.m_fsdi_requestedPosition.pause
-            = FSDI_True;
 
         // log
         LogDebug("[Umbrella]"sv)

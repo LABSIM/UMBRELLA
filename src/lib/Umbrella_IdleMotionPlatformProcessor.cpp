@@ -17,25 +17,12 @@
 // If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <Umbrella/Umbrella_ApplicationManager.hpp>
 #include <Umbrella/Umbrella_IdleMotionPlatformProcessor.hpp>
 #include <Umbrella/Umbrella_MotionPlatformInfo.hpp>
 
 #include <Ouranos/log/Ouranos_Logger_log.hpp>
 
-#include <boost/exception/all.hpp>
-#include <boost/numeric/conversion/cast.hpp>
-
-#include <algorithm>
-#include <chrono>
-#include <cmath>
-#include <exception>
-#include <format>
-#include <fstream>
-#include <numbers>
 #include <string_view>
-#include <thread>
-#include <vector>
 
 #include "ForceSeatDI.h"
 
@@ -77,7 +64,7 @@ namespace Labsim::project::umbrella
                     << "IdleMotionPlatformProcessor::doResetUpstream():  will park to center, request sent"sv;
 
                 // call
-                ForceSeatDI_Park(api, FSDI_ParkMode_Normal);
+                ForceSeatDI_Park(api, FSDI_ParkMode_ToCenter);
 
             } /* for() */
 
@@ -110,6 +97,14 @@ namespace Labsim::project::umbrella
     )
         -> bool
     {
+        // loop
+        for(FSDI_Handle api: platform.m_fsdi_apis)
+        {
+            // call
+            ForceSeatDI_Park(api, FSDI_ParkMode_ToCenter);
+
+        } /* for() */
+
         // if this point is reached, then success
         return true;
 
