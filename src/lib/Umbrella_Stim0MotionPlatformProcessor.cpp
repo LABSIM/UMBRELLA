@@ -139,6 +139,8 @@ namespace Labsim::project::umbrella
             = platform.m_fsdi_requestedPosition.sway
             = platform.m_fsdi_requestedPosition.surge
             = 0.0F;
+        platform.m_fsdi_requestedPosition.pause
+            = FSDI_False;
 
         // log
         LogDebug("[Umbrella]"sv)

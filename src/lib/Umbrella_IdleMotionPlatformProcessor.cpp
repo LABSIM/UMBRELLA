@@ -69,12 +69,14 @@ namespace Labsim::project::umbrella
         // center position requested only once
         if(!this->HasInitialized())
         {
-            // log
-            LogDebug("[Umbrella]"sv)
-                << "IdleMotionPlatformProcessor::doResetUpstream(): init"sv;
-
-            for(FSDI_Handle api: platform.m_fsdi_apis)
+            // loop
+            for(auto api: platform.m_fsdi_apis)
             {
+                // log
+                LogInfo("[Umbrella]"sv)
+                    << "IdleMotionPlatformProcessor::doResetUpstream():  will park to center, request sent"sv;
+
+                // call
                 ForceSeatDI_Park(api, FSDI_ParkMode_ToCenter);
 
             } /* for() */
