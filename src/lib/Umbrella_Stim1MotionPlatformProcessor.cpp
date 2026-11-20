@@ -141,6 +141,15 @@ namespace Labsim::project::umbrella
         LogDebug("[Umbrella]"sv)
             << "Stim1MotionPlatformProcessor::doResetUpstream(): entry"sv;
 
+        // constant
+        static constexpr auto const _s_default_maxSpeed = 65535_UI16;
+
+        // fcku, not trivial...
+        platform.m_fsdi_requestedPosition.maxSpeed            = _s_default_maxSpeed;
+        platform.m_fsdi_requestedPosition.pause               = FSDI_True;
+        platform.m_fsdi_requestedPosition.strategy            = FSDI_Strategy_BestMatch;
+        platform.m_fsdi_requestedPosition.accelerationProfile = FSDI_AP_Rapid;
+
         // reset requested
         platform.m_fsdi_requestedPosition.yaw
             = platform.m_fsdi_requestedPosition.pitch
@@ -149,8 +158,10 @@ namespace Labsim::project::umbrella
             = platform.m_fsdi_requestedPosition.sway
             = platform.m_fsdi_requestedPosition.surge
             = 0.0F;
+
+        // fcku, not trivial...
         platform.m_fsdi_requestedPosition.pause
-            = FSDI_False;
+            = FSDI_True;
 
         // log
         LogDebug("[Umbrella]"sv)

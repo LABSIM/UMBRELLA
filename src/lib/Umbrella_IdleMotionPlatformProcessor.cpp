@@ -70,14 +70,14 @@ namespace Labsim::project::umbrella
         if(!this->HasInitialized())
         {
             // loop
-            for(auto api: platform.m_fsdi_apis)
+            for(FSDI_Handle api: platform.m_fsdi_apis)
             {
                 // log
                 LogInfo("[Umbrella]"sv)
                     << "IdleMotionPlatformProcessor::doResetUpstream():  will park to center, request sent"sv;
 
                 // call
-                ForceSeatDI_Park(api, FSDI_ParkMode_ToCenter);
+                ForceSeatDI_Park(api, FSDI_ParkMode_Normal);
 
             } /* for() */
 

@@ -169,7 +169,6 @@ namespace Labsim::project::umbrella
             << "MotionPlatformManager::Configure(): entry"sv;
 
         static constexpr auto const _s_default_maxSpeed = 65535_UI16;
-        ;
 
         // upstream
         // allocate & configure FSDI resquested struct
@@ -330,7 +329,7 @@ namespace Labsim::project::umbrella
         // cleanup
         for(FSDI_Handle api: this->m_pPlatform->m_fsdi_apis)
         {
-            ForceSeatDI_Park(api, FSDI_ParkMode_Normal);
+            ForceSeatDI_Park(api, FSDI_ParkMode_ForTransport);
             ForceSeatDI_Delete(api);
 
         } /* for() */
