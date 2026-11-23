@@ -53,12 +53,21 @@ namespace Labsim::project::umbrella
         LogDebug("[Umbrella]"sv)
             << "Stim0MotionPlatformProcessor::doInitFirstPass(): entry"sv;
 
+        // constant
+        static constexpr auto const _s_default_amplitude = 1.0;
+        static constexpr auto const _s_default_frequency = 0.1;
+
         // get a handle
         auto handle = ApplicationManager::get();
-
         // extract settings
         this->m_setting_is_debug = handle->getOptions().isDebugSimulation();
         this->m_setting_index    = handle->getOptions().getFSDIPlatformIndex();
+        this->m_setting_amplitude           = _s_default_amplitude;
+        this->m_setting_frequency           = _s_default_frequency;
+        this->m_setting_y_axis_phase_offset = handle->getOptions().getYAxisPhaseOffset();
+        this->m_setting_z_axis_phase_offset = handle->getOptions().getZAxisPhaseOffset();
+
+        // configure outputs
         auto output_filename
             = "umbrella_"s
               + std::regex_replace(
@@ -165,6 +174,122 @@ namespace Labsim::project::umbrella
     )
         -> bool
     {
+        // log
+        LogDebug("[Umbrella]"sv)
+            << "Stim0MotionPlatformProcessor::doBuildUpstream(): entry"sv;
+
+        // invariant
+        static constexpr auto const _one_constant = 1.0;
+        static constexpr auto const _two_constant = 2.0;
+
+        // encapsulate all calculus
+        try
+        {
+            //
+            // Sway
+            // x(t) = Ax * sin((2*pi*t) / T)
+            //
+            platform.m_fsdi_requestedPosition.sway
+                = boost::numeric_cast< FSDI_FLOAT >(
+                    this->m_setting_amplitude
+                    * std::sin(
+                        (_two_constant * std::numbers::pi * _elapsed_tick_count)
+                        / (_one_constant / this->m_setting_frequency)
+                    )
+                );
+
+            //
+            // Heave
+            // y(t) = Ay * sin( ((2*pi*t) / T) + ( (pi/2) * sin((2*pi*t) / T(y)) ) )
+            //
+            platform.m_fsdi_requestedPosition.heave
+                = boost::numeric_cast< FSDI_FLOAT >(
+                    this->m_setting_amplitude
+                    * std::sin(
+                        (
+                            (_two_constant * std::numbers::pi * _elapsed_tick_count)
+                            / (_one_constant / this->m_setting_frequency)
+                        )
+                        + ((std::numbers::pi / _two_constant)
+                           * ((_two_constant * std::numbers::pi * _elapsed_tick_count)
+                              / ((_one_constant / this->m_setting_frequency)
+                                 * this->m_setting_y_axis_phase_offset
+                              )
+                           )
+                        )
+                    )
+                );
+
+            //
+            // Surge
+            // z(t) = Az * sin( ((2*pi*t) / T) + ( (pi/2) * sin((2*pi*t) / T(z)) ) )
+            //
+            platform.m_fsdi_requestedPosition.surge
+                = boost::numeric_cast< FSDI_FLOAT >(
+                    this->m_setting_amplitude
+                    * std::sin(
+                        (
+                            (_two_constant * std::numbers::pi * _elapsed_tick_count)
+                            / (_one_constant / this->m_setting_frequency)
+                        )
+                        + ((std::numbers::pi / _two_constant)
+                           * ((_two_constant * std::numbers::pi * _elapsed_tick_count)
+                              / ((_one_constant / this->m_setting_frequency)
+                                 * this->m_setting_z_axis_phase_offset
+                              )
+                           )
+                        )
+                    )
+                );
+        }
+        catch(boost::numeric::negative_overflow const & _exception)
+        {
+            // log
+            LogWarn("[Umbrella]"sv)
+                << "Stim0MotionPlatformProcessor::doBuildUpstream() => caught boost::numeric::negative_overflow : "sv
+                << _exception.what();
+        }
+        catch(boost::numeric::positive_overflow const & _exception)
+        {
+            // log
+            LogWarn("[Umbrella]"sv)
+                << "Stim0MotionPlatformProcessor::doBuildUpstream() => caught boost::numeric::positive_overflow : "sv
+                << _exception.what();
+        }
+        catch(boost::numeric::bad_numeric_cast const & _exception)
+        {
+            // log
+            LogWarn("[Umbrella]"sv)
+                << "Stim0MotionPlatformProcessor::doBuildUpstream() => caught boost::numeric::bad_numeric_cast : "sv
+                << _exception.what();
+        }
+        catch(boost::exception const & _exception)
+        {
+            // log
+            LogWarn("[Umbrella]"sv)
+                << "Stim0MotionPlatformProcessor::doBuildUpstream() => caught boost::exception : "sv
+                << boost::diagnostic_information(_exception);
+        }
+        catch(std::exception const & _exception)
+        {
+            // log
+            LogWarn("[Umbrella]"sv)
+                << "Stim0MotionPlatformProcessor::doBuildUpstream() => caught caught std::exception : "sv
+                << _exception.what();
+        }
+        catch(...)
+        {
+            // log
+            LogWarn("[Umbrella]"sv)
+                << "Stim0MotionPlatformProcessor::doBuildUpstream() => caught caught unhandled exception : "sv
+                << boost::current_exception_diagnostic_information();
+
+        } /* try() */
+
+        // log
+        LogDebug("[Umbrella]"sv)
+            << "Stim0MotionPlatformProcessor::doBuildUpstream(): exit"sv;
+
         // if this point is reached, then success
         return true;
 
