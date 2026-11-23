@@ -22,6 +22,8 @@
 
 #include <Umbrella/Umbrella_AbstractMotionPlatformProcessor.hpp>
 
+#include <array>
+
 // avoid namespace pollution
 namespace Labsim::project::umbrella
 {
@@ -79,6 +81,15 @@ namespace Labsim::project::umbrella
 
         bool
         doProcessDownstream(MotionPlatformInfo & platform) override;
+
+    private:
+
+        // local members
+
+        bool                    m_setting_is_debug{false};
+        uint32_t                m_setting_index{0};
+        std::array< double, 3 > m_startPos{};
+        double                  m_currentTime{0.0};
 
     }; /* class IdleMotionPlatformProcessor */
 
