@@ -183,6 +183,9 @@ namespace Labsim::project::umbrella
         static constexpr auto const _one_constant = 1.0;
         static constexpr auto const _two_constant = 2.0;
 
+        // local
+        static auto current_elapsed_count = 0.0;
+
         // iff.
         if(!this->HasInitialized())
         {
@@ -191,8 +194,8 @@ namespace Labsim::project::umbrella
 
         } /* if() */
 
-        // the current phase elapsed
-        static auto current_elapsed_count = _elapsed_tick_count - this->m_current_ref;
+        // update
+        current_elapsed_count = _elapsed_tick_count - this->m_current_ref;
 
         // encapsulate all calculus
         try
