@@ -100,7 +100,6 @@ namespace Labsim::project::umbrella
         // Balourd rotor principal modéré 5.0 Hz 0.8 mm (with overshoot => 6.2mm)
         //
         static constexpr auto const _s_default_stim2_frequency_hz = 5.0;
-        // static constexpr auto const _s_default_stim2_amplitude_mm = 0.8;
         static constexpr auto const _s_default_stim2_amplitude_mm = 6.2;
 
         //
