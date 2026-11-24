@@ -94,6 +94,7 @@ namespace Labsim::project::umbrella
             // vars
             using ms_type = decltype(self_type::_s_default_idle_init_duration_ms.count());
             ms_type idle_init_duration_buf{};
+            ms_type idle_reset_duration_buf{};
             ms_type target_loop_period_buf{};
             auto    converter = std::wstring_convert< std::codecvt_utf8_utf16< wchar_t > >{};
             auto    default_fsdi_platform_sn
@@ -131,6 +132,11 @@ namespace Labsim::project::umbrella
                     "init-duration",
                     po::value< ms_type >(&idle_init_duration_buf)->default_value(self_type::_s_default_idle_init_duration_ms.count()),
                     "The idle init duration in ms"
+                )
+                (
+                    "reset-duration",
+                    po::value< ms_type >(&idle_reset_duration_buf)->default_value(self_type::_s_default_idle_reset_duration_ms.count()),
+                    "The idle reset duration in ms"
                 )
                 (
                     "loop-period",
@@ -248,9 +254,10 @@ namespace Labsim::project::umbrella
             } /* if() */
 
             // inject tmp vars into member
-            this->m_FSDIPlatformSN   = converter.from_bytes(fsdi_platform_sn);
-            this->m_idleInitDuration = std::chrono::milliseconds(idle_init_duration_buf);
-            this->m_targetLoopPeriod = std::chrono::milliseconds(target_loop_period_buf);
+            this->m_FSDIPlatformSN    = converter.from_bytes(fsdi_platform_sn);
+            this->m_idleInitDuration  = std::chrono::milliseconds(idle_init_duration_buf);
+            this->m_idleResetDuration = std::chrono::milliseconds(idle_reset_duration_buf);
+            this->m_targetLoopPeriod  = std::chrono::milliseconds(target_loop_period_buf);
 
             // log result
             Labsim::LogInfo("[Umbrella]"sv)
@@ -261,6 +268,7 @@ namespace Labsim::project::umbrella
                 << "FSDIPlatformIP = "sv << this->getFSDIPlatformIP() << ", "sv
                 << "FSDIPlatformSN = "sv << converter.to_bytes(this->getFSDIPlatformSN()) << ", "sv
                 << "IdleInitDuration = "sv << this->getIdleInitDuration() << ", "sv
+                << "IdleResetDuration = "sv << this->getIdleResetDuration() << ", "sv
                 << "TargetLoopPeriod = "sv << this->getTargetLoopPeriod() << ", "sv
                 << "StimMode = "sv << titans::ouranos::to_underlying(this->getStimMode()) << ", "sv
                 << "Stim1Frequency = "sv << this->getStim1Frequency() << ", "sv

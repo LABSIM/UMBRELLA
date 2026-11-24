@@ -23,6 +23,9 @@
 
 #include <Ouranos/log/Ouranos_Logger_log.hpp>
 
+#include <boost/numeric/conversion/cast.hpp>
+
+#include <algorithm>
 #include <string_view>
 
 #include "ForceSeatDI.h"
@@ -43,12 +46,16 @@ namespace Labsim::project::umbrella
         LogDebug("[Umbrella]"sv)
             << "IdleMotionPlatformProcessor::doInitFirstPass(): entry"sv;
 
+        // constant
+        static constexpr auto const _s_one_second = 1.0s;
+
         // get a handle
         auto handle = ApplicationManager::get();
 
         // extract settings
-        this->m_setting_is_debug = handle->getOptions().isDebugSimulation();
-        this->m_setting_index    = handle->getOptions().getFSDIPlatformIndex();
+        this->m_setting_is_debug       = handle->getOptions().isDebugSimulation();
+        this->m_setting_index          = handle->getOptions().getFSDIPlatformIndex();
+        this->m_setting_reset_duration = boost::numeric_cast< double >(handle->getOptions().getIdleResetDuration() / _s_one_second);
 
         // log
         LogDebug("[Umbrella]"sv)
@@ -87,36 +94,6 @@ namespace Labsim::project::umbrella
             = platform.m_fsdi_requestedPosition.surge
             = 0.0F;
 
-        // // center position requested only once
-        // if(!this->HasInitialized())
-        // {
-        // // loop
-        // for(FSDI_Handle api: platform.m_fsdi_apis)
-        // {
-        //     // mark as paused
-        //     if(ForceSeatDI_SendTopTablePosPhy(
-        //            api,
-        //            &platform.m_fsdi_requestedPosition
-        //        )
-        //        != FSDI_True)
-        //     {
-        //         // failed...
-        //         LogError("[Umbrella]"sv)
-        //             << "IdleMotionPlatformProcessor::doSendUpstream(): failed to send request to platform..."sv;
-
-        //     } /* if() */
-
-        //     // log
-        //     LogInfo("[Umbrella]"sv)
-        //         << "IdleMotionPlatformProcessor::doResetUpstream(): will park to center, request sent"sv;
-
-        //     // call
-        //     ForceSeatDI_Park(api, FSDI_ParkMode_ToCenter);
-
-        // } /* for() */
-
-        // } /* if() */
-
         // log
         LogDebug("[Umbrella]"sv)
             << "IdleMotionPlatformProcessor::doResetUpstream(): exit"sv;
@@ -133,10 +110,11 @@ namespace Labsim::project::umbrella
     )
         -> bool
     {
-        // constant
-        static constexpr double _s_total_reset_time = 2.0;
+        // log
+        LogDebug("[Umbrella]"sv)
+            << "IdleMotionPlatformProcessor::doBuildUpstream(): entry"sv;
 
-        // interp lambda
+        // classical linear interpolation lambda
         constexpr auto lambda_LERP
             = [=](
                   double const & _start,
@@ -144,25 +122,30 @@ namespace Labsim::project::umbrella
                   double const & _ratio
               ) -> double
         {
-            return _start + _ratio * (_end - _start);
+            return (_start + (_ratio * (_end - _start)));
         };
 
-        // center position requested only once
-        if(this->HasInitialized())
+        if(!this->HasInitialized())
         {
-            // add elapsed
-            this->m_currentTime += _elapsed_tick_count;
-
+            // get the ref point
+            this->m_current_ref = _elapsed_tick_count;
+        }
+        else
+        {
             // updating ratio
             auto ratio
-                = 1.0 - std::clamp((_s_total_reset_time - this->m_currentTime) / _s_total_reset_time, 0.0, 1.0);
+                = 1.0 - std::clamp((this->m_setting_reset_duration - (_elapsed_tick_count - this->m_current_ref)) / this->m_setting_reset_duration, 0.0, 1.0);
 
             // simple LERP
-            platform.m_fsdi_requestedPosition.heave = lambda_LERP(this->m_startPos[0], 0.0, ratio);
-            platform.m_fsdi_requestedPosition.sway  = lambda_LERP(this->m_startPos[1], 0.0, ratio);
-            platform.m_fsdi_requestedPosition.surge = lambda_LERP(this->m_startPos[2], 0.0, ratio);
+            platform.m_fsdi_requestedPosition.heave = boost::numeric_cast< float >(lambda_LERP(this->m_startPos[0], 0.0, ratio));
+            platform.m_fsdi_requestedPosition.sway  = boost::numeric_cast< float >(lambda_LERP(this->m_startPos[1], 0.0, ratio));
+            platform.m_fsdi_requestedPosition.surge = boost::numeric_cast< float >(lambda_LERP(this->m_startPos[2], 0.0, ratio));
 
         } /* if()*/
+
+        // log
+        LogDebug("[Umbrella]"sv)
+            << "IdleMotionPlatformProcessor::doBuildUpstream(): exit"sv;
 
         // if this point is reached, then success
         return true;
@@ -272,9 +255,9 @@ namespace Labsim::project::umbrella
             } /* if() */
 
             // save init pos
-            this->m_startPos[0] = platform.m_fsdi_actualTopTablePosition.heave;
-            this->m_startPos[1] = platform.m_fsdi_actualTopTablePosition.sway;
-            this->m_startPos[2] = platform.m_fsdi_actualTopTablePosition.surge;
+            this->m_startPos[0] = static_cast< double >(platform.m_fsdi_actualTopTablePosition.heave);
+            this->m_startPos[1] = static_cast< double >(platform.m_fsdi_actualTopTablePosition.sway);
+            this->m_startPos[2] = static_cast< double >(platform.m_fsdi_actualTopTablePosition.surge);
 
         } /* if() */
 

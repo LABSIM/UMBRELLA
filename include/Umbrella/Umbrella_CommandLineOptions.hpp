@@ -57,8 +57,9 @@ namespace Labsim::project::umbrella
 
         // variable timings
 
-        static constexpr auto const _s_default_idle_init_duration_ms = 500ms;
-        static constexpr auto const _s_default_target_loop_period_ms = 10ms;
+        static constexpr auto const _s_default_idle_init_duration_ms  = 500ms;
+        static constexpr auto const _s_default_idle_reset_duration_ms = 1000ms;
+        static constexpr auto const _s_default_target_loop_period_ms  = 10ms;
 
         // ForceSeatDI
 
@@ -196,6 +197,13 @@ namespace Labsim::project::umbrella
         };
 
         [[nodiscard]] constexpr auto
+        getIdleResetDuration() const
+            -> decltype(auto)
+        {
+            return this->m_idleResetDuration;
+        };
+
+        [[nodiscard]] constexpr auto
         getTargetLoopPeriod() const
             -> decltype(auto)
         {
@@ -268,6 +276,7 @@ namespace Labsim::project::umbrella
         std::string               m_FSDIPlatformIP;
         std::wstring              m_FSDIPlatformSN;
         std::chrono::milliseconds m_idleInitDuration{};
+        std::chrono::milliseconds m_idleResetDuration{};
         std::chrono::milliseconds m_targetLoopPeriod{};
         stim_mode                 m_stimMode{};
         double                    m_stim1Frequency{};

@@ -88,8 +88,9 @@ namespace Labsim::project::umbrella
 
         bool                    m_setting_is_debug{false};
         uint32_t                m_setting_index{0};
+        double                  m_setting_reset_duration{0.0};
+        double                  m_current_ref{0.0};
         std::array< double, 3 > m_startPos{};
-        double                  m_currentTime{0.0};
 
     }; /* class IdleMotionPlatformProcessor */
 

@@ -60,8 +60,8 @@ namespace Labsim::project::umbrella
         // get a handle
         auto handle = ApplicationManager::get();
         // extract settings
-        this->m_setting_is_debug = handle->getOptions().isDebugSimulation();
-        this->m_setting_index    = handle->getOptions().getFSDIPlatformIndex();
+        this->m_setting_is_debug            = handle->getOptions().isDebugSimulation();
+        this->m_setting_index               = handle->getOptions().getFSDIPlatformIndex();
         this->m_setting_amplitude           = _s_default_amplitude;
         this->m_setting_frequency           = _s_default_frequency;
         this->m_setting_y_axis_phase_offset = handle->getOptions().getYAxisPhaseOffset();
