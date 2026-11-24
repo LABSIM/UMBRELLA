@@ -59,6 +59,7 @@ namespace Labsim::project::umbrella
 
         // get a handle
         auto handle = ApplicationManager::get();
+        
         // extract settings
         this->m_setting_is_debug            = handle->getOptions().isDebugSimulation();
         this->m_setting_index               = handle->getOptions().getFSDIPlatformIndex();
