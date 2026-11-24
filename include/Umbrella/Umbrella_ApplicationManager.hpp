@@ -46,7 +46,7 @@ namespace Labsim::project::umbrella
 
         // Singleton pattern validator
 
-        explicit ApplicationManager(base_type::_token_type const & _token) noexcept;
+        explicit ApplicationManager(base_type::_token_type const & _token);
 
         // Coplien form - rule of 5
 

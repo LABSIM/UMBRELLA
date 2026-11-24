@@ -41,7 +41,7 @@ namespace Labsim::project::umbrella
 
     ApplicationManager::ApplicationManager(
         base_type::_token_type const & _token
-    ) noexcept
+    )
         : base_type(_token)
         // init the session timestamp
         , m_sessionTimestamp(titans::ouranos::Common::GenerateTimestamp())
