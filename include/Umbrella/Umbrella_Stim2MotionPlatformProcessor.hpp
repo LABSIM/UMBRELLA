@@ -92,6 +92,7 @@ namespace Labsim::project::umbrella
         double        m_setting_frequency{0.0};
         double        m_setting_y_axis_phase_offset{0.0};
         double        m_setting_z_axis_phase_offset{0.0};
+        double        m_current_ref{0.0};
         std::ofstream m_output_file;
 
     }; /* class Stim2MotionPlatformProcessor */

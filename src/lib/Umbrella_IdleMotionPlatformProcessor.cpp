@@ -163,7 +163,7 @@ namespace Labsim::project::umbrella
             << "IdleMotionPlatformProcessor::doSendUpstream(): entry"sv;
 
         // check
-        if(!this->m_setting_is_debug && !this->HasInitialized())
+        if(!this->m_setting_is_debug && this->HasInitialized())
         {
             // send requested datas !
             if(ForceSeatDI_SendTopTablePosPhy(

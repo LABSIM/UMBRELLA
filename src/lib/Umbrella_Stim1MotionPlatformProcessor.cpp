@@ -183,6 +183,17 @@ namespace Labsim::project::umbrella
         static constexpr auto const _one_constant = 1.0;
         static constexpr auto const _two_constant = 2.0;
 
+        // iff.
+        if(!this->HasInitialized())
+        {
+            // get the ref point
+            this->m_current_ref = _elapsed_tick_count;
+
+        } /* if() */
+
+        // the current phase elapsed
+        static auto current_elapsed_count = _elapsed_tick_count - this->m_current_ref;
+
         // encapsulate all calculus
         try
         {
@@ -194,7 +205,7 @@ namespace Labsim::project::umbrella
                 = boost::numeric_cast< FSDI_FLOAT >(
                     this->m_setting_amplitude
                     * std::sin(
-                        (_two_constant * std::numbers::pi * _elapsed_tick_count)
+                        (_two_constant * std::numbers::pi * current_elapsed_count)
                         / (_one_constant / this->m_setting_frequency)
                     )
                 );
@@ -208,11 +219,11 @@ namespace Labsim::project::umbrella
                     this->m_setting_amplitude
                     * std::sin(
                         (
-                            (_two_constant * std::numbers::pi * _elapsed_tick_count)
+                            (_two_constant * std::numbers::pi * current_elapsed_count)
                             / (_one_constant / this->m_setting_frequency)
                         )
                         + ((std::numbers::pi / _two_constant)
-                           * ((_two_constant * std::numbers::pi * _elapsed_tick_count)
+                           * ((_two_constant * std::numbers::pi * current_elapsed_count)
                               / ((_one_constant / this->m_setting_frequency)
                                  * this->m_setting_y_axis_phase_offset
                               )
@@ -230,11 +241,11 @@ namespace Labsim::project::umbrella
                     this->m_setting_amplitude
                     * std::sin(
                         (
-                            (_two_constant * std::numbers::pi * _elapsed_tick_count)
+                            (_two_constant * std::numbers::pi * current_elapsed_count)
                             / (_one_constant / this->m_setting_frequency)
                         )
                         + ((std::numbers::pi / _two_constant)
-                           * ((_two_constant * std::numbers::pi * _elapsed_tick_count)
+                           * ((_two_constant * std::numbers::pi * current_elapsed_count)
                               / ((_one_constant / this->m_setting_frequency)
                                  * this->m_setting_z_axis_phase_offset
                               )
